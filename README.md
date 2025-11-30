@@ -56,6 +56,8 @@ SPOTIPY_REDIRECT_URI=http://127.0.0.1:8000/callback
 
 On Windows, you can use the `spotify-search` launcher instead of `python src/cli.py` for all commands (e.g., `spotify-search sync`).
 
+On macOS, see `macos_install/README.md` for a quick installer and a simple `./macos_install/spotify-search` launcher that avoids typing `python`.
+
 ### Authenticate with Spotify
 
 ```bash

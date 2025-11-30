@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Simple launcher for the CLI on macOS/Linux
+# Usage: ./macos_install/spotify-search <command> [args]
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+PY="$REPO_ROOT/.venv/bin/python"
+if [[ ! -x "$PY" ]]; then
+  PY="python3"
+fi
+exec "$PY" "$REPO_ROOT/src/cli.py" "$@"
