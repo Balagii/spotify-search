@@ -1,0 +1,1 @@
+"""Spotify Library Manager package."""

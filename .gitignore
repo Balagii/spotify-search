@@ -1,0 +1,32 @@
+# Virtual Environment
+venv/
+.venv/
+.venv-win11/
+env/
+ENV/
+
+# Environment variables
+.env
+.cache*
+
+# Database
+spotify_library.json
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
