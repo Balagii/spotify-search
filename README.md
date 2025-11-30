@@ -239,7 +239,7 @@ spotify-search/
 │   ├── config.py           # Configuration management
 │   ├── database.py         # Database operations
 │   ├── spotify_client.py   # Spotify API wrapper
-│   └── main.py             # (Original file)
+│   └── __init__.py         # Package marker
 ├── .env                    # Environment variables (not in git)
 ├── .env.example            # Example environment file
 ├── .gitignore              # Git ignore rules

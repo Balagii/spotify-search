@@ -61,7 +61,7 @@ def sync_diff():
 
     if not config.validate_config():
         click.echo("❌ Spotify credentials not configured!")
-        click.echo("   Run 'python src/cli.py setup' first")
+        click.echo("   Run 'spotify-search setup' first")
         sys.exit(1)
 
     exit_code = 0
@@ -216,7 +216,7 @@ def setup():
         f.write(f"SPOTIPY_REDIRECT_URI={redirect_uri}\n")
     
     click.echo("\n✅ Configuration saved to .env file!")
-    click.echo("🚀 Run 'python src/cli.py sync' to download your library")
+    click.echo("🚀 Run 'spotify-search sync' to download your library")
 
 
 @cli.command()
@@ -226,7 +226,7 @@ def auth():
     
     if not config.validate_config():
         click.echo("❌ Spotify credentials not configured!")
-        click.echo("   Run 'python src/cli.py setup' first")
+        click.echo("   Run 'spotify-search setup' first")
         return
     
     try:
@@ -247,7 +247,7 @@ def sync(clear):
     
     if not config.validate_config():
         click.echo("❌ Spotify credentials not configured!")
-        click.echo("   Run 'python src/cli.py setup' first")
+        click.echo("   Run 'spotify-search setup' first")
         sys.exit(1)
     
     exit_code = 0
