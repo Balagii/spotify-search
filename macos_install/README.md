@@ -54,6 +54,6 @@ spotify-search stats
 
 ## Notes
 
-- You must add the redirect URI you use (default `http://localhost:8888/callback`) in your Spotify Developer Dashboard app settings.
+- You must add the redirect URI you use (default `http://127.0.0.1:8000/callback`) in your Spotify Developer Dashboard app settings.
 - Secrets are stored locally in `.env`, which is already `.gitignore`d.
 - For faster re-syncs, prefer `sync-diff`.

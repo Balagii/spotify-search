@@ -26,8 +26,8 @@ else
   read -p "Enter Spotify Client ID: " SPOTIPY_CLIENT_ID
   read -s -p "Enter Spotify Client Secret: " SPOTIPY_CLIENT_SECRET
   echo
-  read -p "Enter Redirect URI [http://localhost:8888/callback]: " SPOTIPY_REDIRECT_URI
-  SPOTIPY_REDIRECT_URI=${SPOTIPY_REDIRECT_URI:-http://localhost:8888/callback}
+  read -p "Enter Redirect URI [http://127.0.0.1:8000/callback]: " SPOTIPY_REDIRECT_URI
+  SPOTIPY_REDIRECT_URI=${SPOTIPY_REDIRECT_URI:-http://127.0.0.1:8000/callback}
 
   cat > .env <<EOF
 SPOTIPY_CLIENT_ID=$SPOTIPY_CLIENT_ID
