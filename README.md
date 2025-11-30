@@ -1,6 +1,6 @@
 # Spotify Library Manager 🎵
 
-A Python CLI application to download, store, and search your Spotify library locally.
+A Python CLI application to download, store, and search your Spotify library locally. Fills a shortcoming of Spotify UIs where you can't search by track name inside your library. Also adds some fun features like duplicate detection etc.
 
 ## Features
 
@@ -8,8 +8,37 @@ A Python CLI application to download, store, and search your Spotify library loc
 - 📥 Download all your playlists and saved tracks
 - 💾 Store metadata in a local JSON database (TinyDB)
 - 🔍 Fast local search across tracks, artists, and albums
+- 🔁 Find duplicates across playlists (ranked by occurrences)
+- ⚡ Diff sync that skips unchanged playlists using `snapshot_id`
 - 📊 View library statistics
 - 📂 Browse playlists and tracks
+- 💬 Interactive shell (run without arguments)
+- 🍎 macOS quick installer and simple launcher
+
+## Table of Contents
+
+- [Features](#features)
+- [Setup](#setup)
+	- [Create Virtual Environment](#1-create-virtual-environment)
+	- [Install Dependencies](#2-install-dependencies)
+	- [Get Spotify API Credentials](#3-get-spotify-api-credentials)
+	- [Configure the Application](#4-configure-the-application)
+- [Usage](#usage)
+	- [Authenticate with Spotify](#authenticate-with-spotify)
+	- [Sync Your Library](#sync-your-library)
+	- [Sync Differences (Faster)](#sync-differences-faster)
+	- [Search for Tracks](#search-for-tracks)
+	- [Find Duplicates](#find-duplicates)
+	- [List Playlists](#list-playlists)
+	- [View Statistics](#view-statistics)
+	- [Interactive Shell (Dialog Mode)](#interactive-shell-dialog-mode)
+	- [Clear Auth Cache](#clear-auth-cache)
+- [Database Structure](#database-structure)
+- [Project Structure](#project-structure)
+- [Tips](#tips)
+- [Troubleshooting](#troubleshooting)
+- [Future Enhancements](#future-enhancements)
+- [License](#license)
 
 ## Setup
 
@@ -41,7 +70,7 @@ pip install -r requirements.txt
 Run the setup command and enter your credentials:
 
 ```bash
-python src/cli.py setup
+spotify-search setup
 ```
 
 Or manually create a `.env` file:
@@ -54,19 +83,13 @@ SPOTIPY_REDIRECT_URI=http://127.0.0.1:8000/callback
 
 ## Usage
 
-On Windows, you can use the `spotify-search` launcher instead of `python src/cli.py` for all commands (e.g., `spotify-search sync`).
+Use the `spotify-search` command for all operations. Tip: running with no arguments launches the interactive shell automatically.
 
-On macOS, see `macos_install/README.md` for a quick installer and a simple `./macos_install/spotify-search` launcher that avoids typing `python`.
-
-Tip: running the CLI with no arguments launches the interactive shell automatically.
+On macOS, use the [quick installer](macos_install/README.md) to set up the launcher.
 
 ### Authenticate with Spotify
 
 ```bash
-# Cross-platform (Python)
-python src/cli.py auth
-
-# Windows launcher
 spotify-search auth
 ```
 
@@ -77,20 +100,12 @@ This will open a browser window for you to authorize the application. After auth
 Download all your playlists and saved tracks:
 
 ```bash
-# Cross-platform (Python)
-python src/cli.py sync
-
-# Windows launcher
 spotify-search sync
 ```
 
 To clear existing data and start fresh:
 
 ```bash
-# Cross-platform (Python)
-python src/cli.py sync --clear
-
-# Windows launcher
 spotify-search sync --clear
 ```
 
@@ -99,10 +114,6 @@ spotify-search sync --clear
 Skip playlists and saved tracks that already match counts in your local DB. This is much faster for subsequent syncs.
 
 ```bash
-# Cross-platform (Python)
-python src/cli.py sync-diff
-
-# Windows launcher
 spotify-search sync-diff
 ```
 
@@ -117,12 +128,6 @@ Notes:
 Search across track names, artists, and albums:
 
 ```bash
-# Cross-platform (Python)
-python src/cli.py search "bohemian rhapsody"
-python src/cli.py search "taylor swift"
-python src/cli.py search "abbey road"
-
-# Windows launcher
 spotify-search search "bohemian rhapsody"
 spotify-search search "taylor swift"
 spotify-search search "abbey road"
@@ -131,10 +136,6 @@ spotify-search search "abbey road"
 Limit the number of results:
 
 ```bash
-# Cross-platform (Python)
-python src/cli.py search "love" --limit 10
-
-# Windows launcher
 spotify-search search "love" --limit 10
 ```
 
@@ -143,12 +144,7 @@ spotify-search search "love" --limit 10
 List tracks that appear in multiple playlists, ordered by how many times they occur. Shows track info, the number of duplicates, and the playlists (with links) they’re in.
 
 ```bash
-# Cross-platform (Python)
-python src/cli.py duplicates           # top 5 by default
-python src/cli.py duplicates --limit 10
-
-# Windows launcher
-spotify-search duplicates
+spotify-search duplicates           # top 5 by default
 spotify-search duplicates --limit 10
 ```
 
@@ -157,20 +153,12 @@ spotify-search duplicates --limit 10
 View all your playlists:
 
 ```bash
-# Cross-platform (Python)
-python src/cli.py list
-
-# Windows launcher
 spotify-search list
 ```
 
 View tracks in a specific playlist:
 
 ```bash
-# Cross-platform (Python)
-python src/cli.py list --playlist "Discover Weekly"
-
-# Windows launcher
 spotify-search list --playlist "Discover Weekly"
 ```
 
@@ -179,10 +167,6 @@ spotify-search list --playlist "Discover Weekly"
 See your library statistics:
 
 ```bash
-# Cross-platform (Python)
-python src/cli.py stats
-
-# Windows launcher
 spotify-search stats
 ```
 
@@ -216,11 +200,6 @@ spotify-search> exit
 Remove cached Spotify OAuth tokens (useful to re-auth as a different user):
 
 ```bash
-# Cross-platform (Python)
-python src/cli.py clear-auth
-python src/cli.py clear-auth --dry-run  # preview only (shows files which would be removed)
-
-# Windows launcher
 spotify-search clear-auth
 spotify-search clear-auth --dry-run
 ```
@@ -263,11 +242,11 @@ spotify-search/
 │   └── main.py             # (Original file)
 ├── .env                    # Environment variables (not in git)
 ├── .env.example            # Example environment file
-├── .gitignore             # Git ignore rules
-├── requirements.txt        # Python dependencies
-├── README.md              # This file
-├── spotify-search.bat     # Windows launcher
-└── spotify_library.json   # Local database (created after sync)
+├── .gitignore              # Git ignore rules
+├── requirements.txt       # Python dependencies
+├── README.md               # This file
+├── spotify-search.bat      # Windows launcher
+└── spotify_library.json    # Local database (created after sync)
 ```
 
 ## Tips
@@ -299,7 +278,6 @@ Possible features to add:
 - Export playlists to CSV/Excel
 - Create new playlists from search results
 - Audio features analysis (tempo, energy, etc.)
-- Duplicate track detection
 - Playlist comparison tools
 - Web interface
 
