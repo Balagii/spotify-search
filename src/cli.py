@@ -497,6 +497,64 @@ def stats():
     db.close()
 
 
+@cli.command(name="clear-auth")
+@click.option('--dry-run', is_flag=True, help='Show auth cache files that would be removed')
+def clear_auth(dry_run):
+    """Remove cached Spotify OAuth tokens (.auth-cache*; legacy .cache*)."""
+    patterns = [
+        ".auth-cache", ".auth-cache-*", ".auth-cache.*",
+        ".cache", ".cache-*", ".cache.*",  # legacy
+    ]
+    root = Path('.')
+    to_remove = []
+    for pat in patterns:
+        to_remove.extend(root.glob(pat))
+
+    # De-duplicate
+    files = []
+    seen = set()
+    for p in to_remove:
+        if p.resolve() not in seen:
+            files.append(p)
+            seen.add(p.resolve())
+
+    if not files:
+        click.echo("✅ No cache files found.")
+        return
+
+    click.echo("🧹 Cache files:")
+    for f in files:
+        click.echo(f"   • {f}")
+
+    if dry_run:
+        click.echo("\nDRY RUN: No files were deleted.")
+        return
+
+    errors = 0
+    for f in files:
+        try:
+            if f.is_dir():
+                # Defensive: token cache is typically a file, but handle dir
+                for child in f.rglob('*'):
+                    try:
+                        if child.is_file():
+                            child.unlink()
+                    except Exception:
+                        errors += 1
+                try:
+                    f.rmdir()
+                except Exception:
+                    errors += 1
+            else:
+                f.unlink()
+        except Exception:
+            errors += 1
+
+    if errors:
+        click.echo(f"⚠️  Completed with {errors} error(s). Some files may remain.")
+    else:
+        click.echo("✅ Cache cleared.")
+
 @cli.command()
 @click.option('--limit', default=5, show_default=True, help='Maximum number of duplicate entries to show')
 def duplicates(limit):

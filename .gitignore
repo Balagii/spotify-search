@@ -7,6 +7,7 @@ ENV/
 
 # Environment variables
 .env
+.auth-cache*
 .cache*
 
 # Database

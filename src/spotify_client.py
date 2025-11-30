@@ -22,7 +22,7 @@ class SpotifyClient:
             client_secret=config.SPOTIPY_CLIENT_SECRET,
             redirect_uri=config.SPOTIPY_REDIRECT_URI,
             scope=config.SPOTIFY_SCOPE,
-            cache_path=".cache"
+            cache_path=".auth-cache"
         ))
     
     def get_current_user(self) -> Dict:

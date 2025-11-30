@@ -184,6 +184,20 @@ python src/cli.py stats
 spotify-search stats
 ```
 
+### Clear Auth Cache
+
+Remove cached Spotify OAuth tokens (useful to re-auth as a different user):
+
+```bash
+# Cross-platform (Python)
+python src/cli.py clear-auth
+python src/cli.py clear-auth --dry-run  # preview only (shows files which would be removed)
+
+# Windows launcher
+spotify-search clear-auth
+spotify-search clear-auth --dry-run
+```
+
 ## Commands Reference
 
 | Command | Description |
@@ -197,6 +211,7 @@ spotify-search stats
 | `list` | List all playlists |
 | `list --playlist NAME` | Show tracks in a playlist |
 | `stats` | Show library statistics |
+| `clear-auth [--dry-run]` | Remove cached OAuth token files (.auth-cache*, legacy .cache*) |
 
 ## Database Structure
 
@@ -231,7 +246,7 @@ spotify-search/
 ## Tips
 
 - The first sync may take a while if you have a large library
-- The application caches authentication tokens in `.cache` file
+- The application caches authentication tokens in `.auth-cache` file (legacy `.cache` may exist)
 - You can re-sync anytime to update your library with new tracks/playlists
 - Search is performed on your local database, so it's very fast
 - All data is stored locally - no external database required
@@ -240,7 +255,7 @@ spotify-search/
 
 **Authentication Issues:**
 - Make sure your redirect URI in Spotify Dashboard matches exactly: `http://127.0.0.1:8000/callback`
-- Delete the `.cache` file and try authenticating again
+- Delete the `.auth-cache` file (or legacy `.cache`) and try authenticating again
 
 **Sync Failures:**
 - Check your internet connection
