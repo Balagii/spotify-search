@@ -18,6 +18,33 @@ def cli():
     pass
 
 
+# Helpers
+def _print_track_item(track: dict, db: SpotifyDatabase, dup_count: int | None = None):
+    click.echo(f"🎵 {track.get('name','')}")
+    click.echo(f"   👤 {track.get('artist','')}")
+    click.echo(f"   💿 {track.get('album','')}")
+    duration_ms = track.get('duration_ms') or 0
+    duration_sec = duration_ms // 1000
+    duration_str = f"{duration_sec // 60}:{duration_sec % 60:02d}"
+    click.echo(f"   ⏱️  {duration_str}")
+    # Track URL first
+    if track.get('external_url'):
+        click.echo(f"   🔗 {track['external_url']}")
+    # Duplicates info (optional)
+    if dup_count is not None:
+        click.echo(f"   🔁 Duplicates: {dup_count} occurrence{'s' if dup_count != 1 else ''}")
+    # Playlists containing this track
+    playlists = db.get_playlists_for_track(track['id'])
+    if playlists:
+        label = "playlist" if len(playlists) == 1 else "playlists"
+        click.echo(f"   📂 In {label}:")
+        for p in playlists:
+            click.echo(f"      • {p['name']}")
+            if p.get('external_url'):
+                click.echo(f"        🔗 {p['external_url']}")
+    click.echo()
+
+
 @cli.command()
 def sync_diff():
     """Sync only differences: skip playlists with matching track counts."""
@@ -365,25 +392,8 @@ def search(query, limit):
     
     # Display results
     for i, track in enumerate(results[:limit], 1):
-        click.echo(f"{i}. 🎵 {track['name']}")
-        click.echo(f"   👤 {track['artist']}")
-        click.echo(f"   💿 {track['album']}")
-        duration_sec = track['duration_ms'] // 1000
-        duration_str = f"{duration_sec // 60}:{duration_sec % 60:02d}"
-        click.echo(f"   ⏱️  {duration_str}")
-        # Track URL first
-        if track.get('external_url'):
-            click.echo(f"   🔗 {track['external_url']}")
-        # Then list playlists containing this track
-        playlists = db.get_playlists_for_track(track['id'])
-        if playlists:
-            label = "playlist" if len(playlists) == 1 else "playlists"
-            click.echo(f"   📂 In {label}:")
-            for p in playlists:
-                click.echo(f"      • {p['name']}")
-                if p.get('external_url'):
-                    click.echo(f"        🔗 {p['external_url']}")
-        click.echo()
+        click.echo(f"{i}.")
+        _print_track_item(track, db)
     
     if len(results) > limit:
         click.echo(f"... and {len(results) - limit} more results")
@@ -484,6 +494,50 @@ def stats():
             click.echo(f"     {artist}: {count} tracks")
     
     click.echo()
+    db.close()
+
+
+@cli.command()
+@click.option('--limit', default=5, show_default=True, help='Maximum number of duplicate entries to show')
+def duplicates(limit):
+    """List duplicate tracks across playlists, ordered by occurrences desc."""
+    db = SpotifyDatabase()
+
+    # Count occurrences of each track across all playlist relationships
+    rels = db.playlist_tracks.all()
+    if not rels:
+        click.echo("❌ No playlist data found. Run 'sync' first.")
+        db.close()
+        return
+
+    counts = {}
+    for rel in rels:
+        tid = rel.get('track_id')
+        if not tid:
+            continue
+        counts[tid] = counts.get(tid, 0) + 1
+
+    # Build list of (track, count) where count > 1
+    dupes = []
+    for tid, cnt in counts.items():
+        if cnt > 1:
+            t = db.get_track(tid)
+            if t:
+                dupes.append((t, cnt))
+
+    if not dupes:
+        click.echo("✅ No duplicates found across playlists.")
+        db.close()
+        return
+
+    # Sort by count desc, then by track name
+    dupes.sort(key=lambda x: (-x[1], x[0].get('name',''))) 
+
+    click.echo(f"📋 Top duplicates (showing up to {limit}):\n")
+    for idx, (track, cnt) in enumerate(dupes[:limit], 1):
+        click.echo(f"{idx}.")
+        _print_track_item(track, db, dup_count=cnt)
+
     db.close()
 
 

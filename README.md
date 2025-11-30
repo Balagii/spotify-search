@@ -136,6 +136,20 @@ python src/cli.py search "love" --limit 10
 spotify-search search "love" --limit 10
 ```
 
+### Find Duplicates
+
+List tracks that appear in multiple playlists, ordered by how many times they occur. Shows track info, the number of duplicates, and the playlists (with links) they’re in.
+
+```bash
+# Cross-platform (Python)
+python src/cli.py duplicates           # top 5 by default
+python src/cli.py duplicates --limit 10
+
+# Windows launcher
+spotify-search duplicates
+spotify-search duplicates --limit 10
+```
+
 ### List Playlists
 
 View all your playlists:
@@ -179,6 +193,7 @@ spotify-search stats
 | `sync` | Download and sync your entire library |
 | `sync-diff` | Sync only changes; skip up-to-date playlists/saved tracks |
 | `search QUERY` | Search for tracks locally |
+| `duplicates [--limit N]` | List most duplicated tracks across playlists |
 | `list` | List all playlists |
 | `list --playlist NAME` | Show tracks in a playlist |
 | `stats` | Show library statistics |
