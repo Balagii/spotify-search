@@ -10,12 +10,21 @@ sys.path.insert(0, str(Path(__file__).parent))
 import config
 from database import SpotifyDatabase
 from spotify_client import SpotifyClient
+import shlex
+import subprocess
+import os
 
 
-@click.group()
-def cli():
+@click.group(invoke_without_command=True)
+@click.pass_context
+def cli(ctx):
     """Spotify Library Manager - Search and manage your Spotify library locally."""
-    pass
+    if ctx.invoked_subcommand is None:
+        try:
+            shell()
+        except SystemExit:
+            # Allow shell to exit cleanly without stack trace
+            pass
 
 
 # Helpers
@@ -554,6 +563,63 @@ def clear_auth(dry_run):
         click.echo(f"⚠️  Completed with {errors} error(s). Some files may remain.")
     else:
         click.echo("✅ Cache cleared.")
+
+
+@cli.command()
+def shell():
+    """Interactive shell: enter commands in a loop (type 'help' or 'exit')."""
+    click.echo("🎵 Spotify Library Manager - Interactive Shell")
+    click.echo("Type 'help' to see commands, 'exit' to quit.\n")
+
+    cli_path = str(Path(__file__).resolve())
+    py = sys.executable or "python"
+
+    def run_cmd(parts):
+        try:
+            # Spawn a subprocess so commands that call sys.exit won't end the shell
+            res = subprocess.run([py, cli_path] + parts, check=False)
+            return res.returncode
+        except FileNotFoundError:
+            click.echo("❌ Python executable not found.")
+            return 1
+        except Exception as e:
+            click.echo(f"❌ Error running command: {e}")
+            return 1
+
+    def print_help():
+        click.echo("Available commands:")
+        click.echo("  setup | auth | sync | sync --clear | sync-diff")
+        click.echo("  search <query> [--limit N]")
+        click.echo("  list [--playlist NAME]")
+        click.echo("  stats | duplicates [--limit N]")
+        click.echo("  clear-auth [--dry-run]")
+        click.echo("  help | quit | exit")
+
+    while True:
+        try:
+            line = input("spotify-search> ").strip()
+        except EOFError:
+            break
+        except KeyboardInterrupt:
+            click.echo("")
+            continue
+        if not line:
+            continue
+        if line.lower() in ("quit", "exit"):
+            break
+        if line.lower() in ("help", "h", "?"):
+            print_help()
+            continue
+        try:
+            parts = shlex.split(line)
+        except ValueError as e:
+            click.echo(f"❌ Parse error: {e}")
+            continue
+        if not parts:
+            continue
+        code = run_cmd(parts)
+        if code != 0:
+            click.echo(f"⚠️  Command exited with code {code}")
 
 @cli.command()
 @click.option('--limit', default=5, show_default=True, help='Maximum number of duplicate entries to show')

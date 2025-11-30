@@ -58,6 +58,8 @@ On Windows, you can use the `spotify-search` launcher instead of `python src/cli
 
 On macOS, see `macos_install/README.md` for a quick installer and a simple `./macos_install/spotify-search` launcher that avoids typing `python`.
 
+Tip: running the CLI with no arguments launches the interactive shell automatically.
+
 ### Authenticate with Spotify
 
 ```bash
@@ -182,6 +184,31 @@ python src/cli.py stats
 
 # Windows launcher
 spotify-search stats
+```
+
+### Interactive Shell (Dialog Mode)
+
+Run a simple REPL so you don’t need to prefix each command:
+
+```bash
+# Cross-platform (Python)
+python src/cli.py shell
+
+# Or launch with no arguments (auto-shell)
+python src/cli.py
+
+# Windows launcher
+spotify-search shell
+
+# Or launch with no arguments (auto-shell)
+spotify-search
+
+# Inside the shell
+spotify-search> stats
+spotify-search> search "love" --limit 5
+spotify-search> sync-diff
+spotify-search> duplicates --limit 10
+spotify-search> exit
 ```
 
 ### Clear Auth Cache
