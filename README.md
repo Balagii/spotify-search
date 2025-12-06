@@ -245,6 +245,7 @@ spotify-search clear-auth --dry-run
 | `sync` | Download and sync your entire library |
 | `sync-diff` | Sync only changes; skip up-to-date playlists/saved tracks |
 | `search QUERY` | Search for tracks locally |
+| `search "" [--name NAME] [--artist ARTIST] [--album ALBUM] [--limit N]` | Search for tracks locally. Use --name, --artist, and/or --album for advanced filtering. If any filter is used, QUERY is ignored. |
 | `duplicates [--limit N]` | List most duplicated tracks across playlists |
 | `list` | List all playlists |
 | `list --playlist NAME` | Show tracks in a playlist |

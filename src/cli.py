@@ -598,6 +598,7 @@ def shell():
         click.echo("Available commands:")
         click.echo("  setup | auth | sync | sync --clear | sync-diff")
         click.echo("  search <query> [--limit N]")
+        click.echo("  search \"\" --name NAME --artist ARTIST --album ALBUM [--limit N]")
         click.echo("  list [--playlist NAME]")
         click.echo("  stats | duplicates [--limit N]")
         click.echo("  clear-auth [--dry-run]")
