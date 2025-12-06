@@ -125,6 +125,7 @@ Notes:
 
 ### Search for Tracks
 
+
 Search across track names, artists, and albums:
 
 ```bash
@@ -133,7 +134,38 @@ spotify-search search "taylor swift"
 spotify-search search "abbey road"
 ```
 
-Limit the number of results:
+#### Advanced Filtering
+
+You can filter results by track name, artist, or album using options:
+
+```bash
+spotify-search search "" --name "track name" --artist "artist name" --album "album name"
+```
+
+Examples:
+
+- Search for tracks with name containing "love":
+	```bash
+	spotify-search search "" --name "love"
+	```
+- Search for tracks by artist "Adele":
+	```bash
+	spotify-search search "" --artist "Adele"
+	```
+- Search for tracks with name "Hello" by artist "Adele":
+	```bash
+	spotify-search search "" --name "Hello" --artist "Adele"
+	```
+- Search for tracks from album "25":
+	```bash
+	spotify-search search "" --album "25"
+	```
+
+You can combine any of these options. If you use any filter option, the main query argument is ignored and only the filters are used.
+
+#### Limit Results
+
+Use `--limit N` to control the number of results shown (default: 20):
 
 ```bash
 spotify-search search "love" --limit 10

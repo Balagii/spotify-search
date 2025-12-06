@@ -384,13 +384,21 @@ def sync(clear):
 @cli.command()
 @click.argument('query')
 @click.option('--limit', default=20, help='Maximum number of results to show')
-def search(query, limit):
+@click.option('--name', default='', help='Filter by track name substring')
+@click.option('--artist', default='', help='Filter by artist name substring')
+@click.option('--album', default='', help='Filter by album name substring')
+def search(query, limit, name, artist, album):
     """Search for tracks in your local library."""
     db = SpotifyDatabase()
     
-    click.echo(f"🔍 Searching for: '{query}'\n")
+    if (not name) and (not artist) and (not album):
+        click.echo(f"🔍 Searching for: '{query}'\n")
     
-    results = db.search_tracks(query)
+        results = db.search_tracks(query)
+    else:
+        click.echo(f"🔍 Searching for tracks with name '{name}', artist '{artist}', and album '{album}'\n")
+    
+        results = db.search_tracks_by_properties(name, artist, album)
     
     if not results:
         click.echo("❌ No results found")
