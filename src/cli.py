@@ -241,59 +241,61 @@ def auth():
 
 @cli.command()
 @click.option('--clear', is_flag=True, help='Clear existing data before syncing')
-def sync(clear):
-    """Download and sync your entire Spotify library."""
+@click.option('--playlist', default='', help='Sync only a specific playlist by name')
+def sync(clear, playlist):
+    """Download and sync your entire Spotify library, or just one playlist."""
     click.echo("🔄 Syncing Spotify library...\n")
-    
+
     if not config.validate_config():
         click.echo("❌ Spotify credentials not configured!")
         click.echo("   Run 'spotify-search setup' first")
         sys.exit(1)
-    
+
     exit_code = 0
     db = None
     try:
         # Initialize clients
         client = SpotifyClient()
         db = SpotifyDatabase()
-        
+
         # Clear database if requested
         if clear:
             click.echo("🗑️  Clearing existing data...")
             db.clear_all()
-        
+
         # Get user info
         user = client.get_current_user()
         click.echo(f"👤 User: {user['display_name']}\n")
-        
-        # Sync saved tracks
-        click.echo("📀 Fetching saved/liked tracks...")
-        with click.progressbar(length=100, label='Saved tracks') as bar:
-            last = {'count': 0, 'len': 100}
-            def track_progress(current, total):
-                if total != last['len']:
-                    bar.length = total
-                    bar.update(0)  # force redraw when total changes
-                    last['len'] = total
-                delta = max(0, current - last['count'])
-                bar.update(delta)
-                last['count'] = current
 
-            saved_tracks = client.get_saved_tracks(progress_callback=track_progress)
-            # Force bar to complete visually
-            if last['count'] < bar.length:
-                bar.update(bar.length - last['count'])
-        
-        click.echo(f"   💾 Saving {len(saved_tracks)} tracks to database...")
-        with click.progressbar(length=len(saved_tracks), label='   Writing to database') as bar:
-            for track in saved_tracks:
-                added_at = track.pop('added_at')
-                db.insert_track(track)
-                db.add_saved_track(track['id'], added_at)
-                bar.update(1)
-        
-        click.echo(f"   ✅ Saved {len(saved_tracks)} liked tracks\n")
-        
+        # Sync saved tracks (skip if syncing only a playlist)
+        if not playlist:
+            click.echo("📀 Fetching saved/liked tracks...")
+            with click.progressbar(length=100, label='Saved tracks') as bar:
+                last = {'count': 0, 'len': 100}
+                def track_progress(current, total):
+                    if total != last['len']:
+                        bar.length = total
+                        bar.update(0)  # force redraw when total changes
+                        last['len'] = total
+                    delta = max(0, current - last['count'])
+                    bar.update(delta)
+                    last['count'] = current
+
+                saved_tracks = client.get_saved_tracks(progress_callback=track_progress)
+                # Force bar to complete visually
+                if last['count'] < bar.length:
+                    bar.update(bar.length - last['count'])
+
+            click.echo(f"   💾 Saving {len(saved_tracks)} tracks to database...")
+            with click.progressbar(length=len(saved_tracks), label='   Writing to database') as bar:
+                for track in saved_tracks:
+                    added_at = track.pop('added_at')
+                    db.insert_track(track)
+                    db.add_saved_track(track['id'], added_at)
+                    bar.update(1)
+
+            click.echo(f"   ✅ Saved {len(saved_tracks)} liked tracks\n")
+
         # Sync playlists
         click.echo("📝 Fetching playlists...")
         with click.progressbar(length=100, label='Playlists') as bar:
@@ -310,19 +312,36 @@ def sync(clear):
             playlists = client.get_user_playlists(progress_callback=playlist_progress)
             if last['count'] < bar.length:
                 bar.update(bar.length - last['count'])
-        
+
         click.echo(f"   ✅ Found {len(playlists)} playlists\n")
-        
+
+        # If playlist name specified, filter to just that playlist
+        if playlist:
+            matching = [p for p in playlists if playlist.lower() in p['name'].lower()]
+            if not matching:
+                click.echo(f"❌ No playlist found matching '{playlist}'")
+                db.close()
+                sys.exit(1)
+            if len(matching) > 1:
+                click.echo(f"Multiple playlists found:")
+                for i, p in enumerate(matching, 1):
+                    click.echo(f"{i}. {p['name']} ({p['tracks_total']} tracks)")
+                choice = click.prompt("Select playlist number", type=int)
+                selected_playlist = matching[choice - 1]
+            else:
+                selected_playlist = matching[0]
+            playlists = [selected_playlist]
+
         # Sync each playlist's tracks
         for i, playlist in enumerate(playlists, 1):
             click.echo(f"📂 [{i}/{len(playlists)}] {playlist['name']} ({playlist['tracks_total']} tracks)")
-            
+
             # Save playlist info
             # Insert without committing snapshot yet
             pl_no_snap = dict(playlist)
             pl_no_snap.pop('snapshot_id', None)
             db.insert_playlist(pl_no_snap)
-            
+
             # Get playlist tracks
             if playlist['tracks_total'] > 0:
                 with click.progressbar(
@@ -345,7 +364,7 @@ def sync(clear):
                     )
                     if last['count'] < bar.length:
                         bar.update(bar.length - last['count'])
-                
+
                 # Save tracks and relationships
                 with click.progressbar(length=len(playlist_tracks), label='   Saving to database') as save_bar:
                     for track_data, position in playlist_tracks:
@@ -354,11 +373,11 @@ def sync(clear):
                         save_bar.update(1)
                     if save_bar.pos < save_bar.length:
                         save_bar.update(save_bar.length - save_bar.pos)
-            
+
             # Commit snapshot only after successful save
             if playlist.get('snapshot_id'):
                 db.set_playlist_snapshot(playlist['id'], playlist['snapshot_id'])
-        
+
         # Show statistics
         stats = db.get_stats()
         click.echo("\n" + "="*50)
@@ -368,8 +387,7 @@ def sync(clear):
         click.echo(f"   • Total unique tracks: {stats['total_tracks']}")
         click.echo(f"   • Saved/liked tracks: {stats['saved_tracks']}")
         click.echo(f"   • Total playlists: {stats['total_playlists']}")
-        
-        
+
     except Exception as e:
         click.echo(f"\n❌ Sync failed: {str(e)}")
         import traceback
@@ -596,7 +614,7 @@ def shell():
 
     def print_help():
         click.echo("Available commands:")
-        click.echo("  setup | auth | sync | sync --clear | sync-diff")
+        click.echo("  setup | auth | sync | sync --clear | sync --playlist NAME | sync-diff")
         click.echo("  search <query> [--limit N]")
         click.echo("  search \"\" --name NAME --artist ARTIST --album ALBUM [--limit N]")
         click.echo("  list [--playlist NAME]")

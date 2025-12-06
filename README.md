@@ -97,6 +97,7 @@ This will open a browser window for you to authorize the application. After auth
 
 ### Sync Your Library
 
+
 Download all your playlists and saved tracks:
 
 ```bash
@@ -108,6 +109,16 @@ To clear existing data and start fresh:
 ```bash
 spotify-search sync --clear
 ```
+
+#### Sync Only a Specific Playlist
+
+You can sync just one playlist by name (case-insensitive substring match):
+
+```bash
+spotify-search sync --playlist "Discover Weekly"
+```
+
+If multiple playlists match, you'll be prompted to select one. Only the selected playlist will be synced; saved tracks and other playlists are skipped.
 
 ### Sync Differences (Faster)
 
@@ -243,6 +254,7 @@ spotify-search clear-auth --dry-run
 | `setup` | Configure Spotify API credentials |
 | `auth` | Authenticate with Spotify |
 | `sync` | Download and sync your entire library |
+| `sync --playlist NAME` | Sync only a specific playlist by name |
 | `sync-diff` | Sync only changes; skip up-to-date playlists/saved tracks |
 | `search QUERY` | Search for tracks locally |
 | `search "" [--name NAME] [--artist ARTIST] [--album ALBUM] [--limit N]` | Search for tracks locally. Use --name, --artist, and/or --album for advanced filtering. If any filter is used, QUERY is ignored. |
