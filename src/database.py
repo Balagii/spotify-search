@@ -118,11 +118,15 @@ class SpotifyDatabase:
     
     # Playlist-Track relationship operations
     def add_track_to_playlist(self, playlist_id: str, track_id: str, position: int):
-        """Add a track to a playlist."""
+        """Add a track to a playlist at a specific position.
+        Allows the same track to appear multiple times at different positions."""
         PlaylistTrack = Query()
+        # Check if this specific (playlist, track, position) combination already exists
+        # This allows the same track to appear at different positions in the same playlist
         existing = self.playlist_tracks.get(
             (PlaylistTrack.playlist_id == playlist_id) & 
-            (PlaylistTrack.track_id == track_id)
+            (PlaylistTrack.track_id == track_id) &
+            (PlaylistTrack.position == position)
         )
         if not existing:
             self.playlist_tracks.insert({
@@ -148,24 +152,35 @@ class SpotifyDatabase:
         return tracks
 
     def get_playlists_for_track(self, track_id: str) -> List[Dict]:
-        """Get all playlists that contain a given track, ordered by position."""
+        """Get all playlists that contain a given track, including all its positions.
+        Returns a list of playlist dicts extended with a 'positions' list.
+        If the track appears multiple times in a playlist, all positions are included.
+        """
         PlaylistTrack = Query()
         relationships = self.playlist_tracks.search(
             PlaylistTrack.track_id == track_id
         )
-        # Group by playlist, track order by position within each
-        relationships.sort(key=lambda x: (x['playlist_id'], x['position']))
-        playlists = []
-        seen = set()
+        # Group positions by playlist
+        positions_per_playlist: Dict[str, list] = {}
         for rel in relationships:
             pid = rel['playlist_id']
-            if pid in seen:
-                continue
+            pos = rel.get('position', 0)
+            if pid not in positions_per_playlist:
+                positions_per_playlist[pid] = []
+            positions_per_playlist[pid].append(pos)
+        
+        # Build enriched playlist objects with all positions
+        enriched: List[Dict] = []
+        for pid, positions in positions_per_playlist.items():
             pl = self.get_playlist(pid)
             if pl:
-                playlists.append(pl)
-                seen.add(pid)
-        return playlists
+                pl_copy = dict(pl)
+                # Sort positions and add them to the playlist
+                pl_copy['positions'] = sorted(positions)
+                enriched.append(pl_copy)
+        # Sort by playlist name for stable output
+        enriched.sort(key=lambda p: p.get('name', '').lower())
+        return enriched
     
     # Saved tracks operations
     def add_saved_track(self, track_id: str, added_at: str):

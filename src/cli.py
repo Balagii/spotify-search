@@ -36,6 +36,14 @@ def _print_track_item(track: dict, db: SpotifyDatabase, dup_count: int | None = 
     duration_sec = duration_ms // 1000
     duration_str = f"{duration_sec // 60}:{duration_sec % 60:02d}"
     click.echo(f"   ⏱️  {duration_str}")
+    # Playability status
+    is_playable = track.get('is_playable', True)
+    is_local = track.get('is_local', False)
+    if not is_playable:
+        if is_local:
+            click.echo(f"   ⚠️  Not playable (local file)")
+        else:
+            click.echo(f"   ⚠️  Not playable (not available in your region)")
     # Track URL first
     if track.get('external_url'):
         click.echo(f"   🔗 {track['external_url']}")
@@ -48,7 +56,16 @@ def _print_track_item(track: dict, db: SpotifyDatabase, dup_count: int | None = 
         label = "playlist" if len(playlists) == 1 else "playlists"
         click.echo(f"   📂 In {label}:")
         for p in playlists:
-            click.echo(f"      • {p['name']}")
+            positions = p.get('positions', [])
+            if positions:
+                # If multiple positions, show all of them
+                if len(positions) > 1:
+                    pos_text = f" (#{', #'.join(str(pos + 1) for pos in positions)})"
+                else:
+                    pos_text = f" (#{positions[0] + 1})"
+            else:
+                pos_text = ""
+            click.echo(f"      • {p['name']}{pos_text}")
             if p.get('external_url'):
                 click.echo(f"        🔗 {p['external_url']}")
     click.echo()

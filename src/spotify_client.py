@@ -2,6 +2,7 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from typing import List, Dict, Optional
+import hashlib
 import config
 
 
@@ -29,12 +30,19 @@ class SpotifyClient:
         """Get current user information."""
         return self.sp.current_user()
     
-    def extract_track_data(self, track: Dict) -> Optional[Dict]:
-        """Extract relevant track data from Spotify track object."""
+    def extract_track_data(self, track: Dict, is_local_item: bool = False) -> Optional[Dict]:
+        """
+        Extract relevant track data from Spotify track object.
+        
+        Determines playability based on:
+        - is_local: Local files are not playable via Spotify API
+        - available_markets: If empty, track is not available in user's market/region
+        
+        Args:
+            track: The track object from Spotify API
+            is_local_item: Whether the item in the playlist is marked as local (from item.is_local)
+        """
         if not track:
-            return None
-        # Skip local/unavailable tracks that lack a Spotify ID
-        if not track.get('id'):
             return None
         artists = track.get('artists') or []
         artist_names = [a.get('name') for a in artists if a and a.get('name')]
@@ -42,8 +50,30 @@ class SpotifyClient:
         album_obj = track.get('album') or {}
         album_name = album_obj.get('name') or ''
         
+        # Handle track ID - local tracks may have null IDs
+        # Generate a unique ID from track name and URI for local tracks
+        track_id = track.get('id')
+        if not track_id:
+            # For local tracks with null IDs, create a deterministic ID from URI and name
+            uri = track.get('uri', '')
+            name = track.get('name', '')
+            unique_str = f"{uri}:{name}"
+            track_id = hashlib.md5(unique_str.encode()).hexdigest()
+        
+        # Determine if track is playable
+        # A track is NOT playable if:
+        # 1. It's marked as a local file (is_local: true)
+        # 2. OR it has an empty available_markets list (not available in user's region)
+        is_local = is_local_item or track.get('is_local', False)
+        available_markets = track.get('available_markets', [])
+        
+        # A track is playable only if:
+        # - It's NOT a local file AND
+        # - It has available markets (available_markets is not empty)
+        is_playable = not is_local and bool(available_markets)
+        
         return {
-            'id': track['id'],
+            'id': track_id,
             'name': track.get('name') or '',
             'artist': artist_str,
             'album': album_name,
@@ -54,6 +84,9 @@ class SpotifyClient:
             'external_url': (track.get('external_urls') or {}).get('spotify', ''),
             'preview_url': track.get('preview_url', ''),
             'release_date': album_obj.get('release_date', ''),
+            'is_playable': is_playable,
+            'is_local': is_local,
+            'available_markets': available_markets,
         }
     
     def get_saved_tracks(self, progress_callback=None) -> List[Dict]:
@@ -75,7 +108,7 @@ class SpotifyClient:
                 break
             
             for item in results['items']:
-                track_data = self.extract_track_data(item['track'])
+                track_data = self.extract_track_data(item['track'], is_local_item=item.get('is_local', False))
                 if track_data:
                     track_data['added_at'] = item['added_at']
                     tracks.append(track_data)
@@ -160,7 +193,7 @@ class SpotifyClient:
                 playlist_id, 
                 limit=limit, 
                 offset=offset,
-                fields='items(track(id,name,artists,album,duration_ms,popularity,explicit,uri,external_urls,preview_url)),next,total'
+                fields='items(is_local,track(id,name,artists,album,duration_ms,popularity,explicit,uri,external_urls,preview_url,available_markets)),next,total'
             )
             page += 1
             if pages_total is None:
@@ -171,11 +204,14 @@ class SpotifyClient:
                 break
             
             for item in results['items']:
-                if item['track']:  # Sometimes tracks can be None (deleted/unavailable)
-                    track_data = self.extract_track_data(item['track'])
+                # Increment position for every item to match Spotify UI ordering,
+                # even if the track is unavailable or skipped locally.
+                trk = item.get('track')
+                if trk:
+                    track_data = self.extract_track_data(trk, is_local_item=item.get('is_local', False))
                     if track_data:
                         tracks.append((track_data, position))
-                        position += 1
+                position += 1
             
             if progress_callback and pages_total is not None:
                 progress_callback(page, pages_total)
