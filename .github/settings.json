@@ -1,0 +1,14 @@
+{
+  "copilot-settings": {
+    "instructions": [
+      {
+        "path": ".copilot/instructions/python.instructions.md"
+      }
+    ],
+    "agents": [
+      {
+        "path": ".copilot/agents/python-expert.agent.md"
+      }
+    ]
+  }
+}
