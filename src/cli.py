@@ -457,7 +457,7 @@ def sync(clear, playlist):
 
 
 @cli.command()
-@click.argument('query')
+@click.argument('query', required=False, default='')
 @click.option('--limit', default=20, help='Maximum number of results to show')
 @click.option('--name', default='', help='Filter by track name substring')
 @click.option('--artist', default='', help='Filter by artist name substring')
@@ -466,23 +466,30 @@ def search(query, limit, name, artist, album):
     """Search for tracks in your local library.
     
     Usage:
-      spotify-search search "QUERY"                           Search by track/artist/album
-      spotify-search search "QUERY" --limit N                 Search with result limit
-      spotify-search search "" --name "NAME"                  Search by track name
-      spotify-search search "" --artist "ARTIST"              Search by artist name
-      spotify-search search "" --album "ALBUM"                Search by album name
-      spotify-search search "" --name "NAME" --artist "A"     Combine multiple filters
+      spotify-search search "QUERY"                  Search by track/artist/album
+      spotify-search search "QUERY" --limit N        Search with result limit
+      spotify-search search --name "NAME"            Search by track name only
+      spotify-search search --artist "ARTIST"        Search by artist name only
+      spotify-search search --album "ALBUM"          Search by album name only
+      spotify-search search --name "N" --artist "A"  Combine multiple filters
     """
     db = SpotifyDatabase()
     
-    if (not name) and (not artist) and (not album):
-        click.echo(f"🔍 Searching for: '{query}'\n")
+    # Check if any filter options are provided
+    has_filter_options = bool(name or artist or album)
     
+    if has_filter_options:
+        # Use property-based search
+        click.echo(f"🔍 Searching for tracks with name '{name}', artist '{artist}', and album '{album}'\n")
+        results = db.search_tracks_by_properties(name, artist, album)
+    elif query:
+        # Use general search on query
+        click.echo(f"🔍 Searching for: '{query}'\n")
         results = db.search_tracks(query)
     else:
-        click.echo(f"🔍 Searching for tracks with name '{name}', artist '{artist}', and album '{album}'\n")
-    
-        results = db.search_tracks_by_properties(name, artist, album)
+        click.echo("❌ Please provide a search query or use filter options (--name, --artist, --album)")
+        db.close()
+        return
     
     if not results:
         click.echo("❌ No results found")

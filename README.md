@@ -150,26 +150,26 @@ spotify-search search "abbey road"
 You can filter results by track name, artist, or album using options:
 
 ```bash
-spotify-search search "" --name "track name" --artist "artist name" --album "album name"
+spotify-search search --name "track name" --artist "artist name" --album "album name"
 ```
 
 Examples:
 
 - Search for tracks with name containing "love":
 	```bash
-	spotify-search search "" --name "love"
+	spotify-search search --name "love"
 	```
 - Search for tracks by artist "Adele":
 	```bash
-	spotify-search search "" --artist "Adele"
+	spotify-search search --artist "Adele"
 	```
 - Search for tracks with name "Hello" by artist "Adele":
 	```bash
-	spotify-search search "" --name "Hello" --artist "Adele"
+	spotify-search search --name "Hello" --artist "Adele"
 	```
 - Search for tracks from album "25":
 	```bash
-	spotify-search search "" --album "25"
+	spotify-search search --album "25"
 	```
 
 You can combine any of these options. If you use any filter option, the main query argument is ignored and only the filters are used.
@@ -257,7 +257,11 @@ spotify-search clear-auth --dry-run
 | `sync --playlist NAME` | Sync only a specific playlist by name |
 | `sync-diff` | Sync only changes; skip up-to-date playlists/saved tracks |
 | `search QUERY` | Search for tracks locally |
-| `search "" [--name NAME] [--artist ARTIST] [--album ALBUM] [--limit N]` | Search for tracks locally. Use --name, --artist, and/or --album for advanced filtering. If any filter is used, QUERY is ignored. |
+| `search QUERY --limit N` | Search for tracks with result limit |
+| `search --name NAME` | Search by track name |
+| `search --artist ARTIST` | Search by artist name |
+| `search --album ALBUM` | Search by album name |
+| `search --name N --artist A [--album AL]` | Combine multiple filters |
 | `duplicates [--limit N]` | List most duplicated tracks across playlists |
 | `list` | List all playlists |
 | `list --playlist NAME` | Show tracks in a playlist |
