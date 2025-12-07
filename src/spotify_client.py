@@ -36,7 +36,10 @@ class SpotifyClient:
         
         Determines playability based on:
         - is_local: Local files are not playable via Spotify API
-        - available_markets: If empty, track is not available in user's market/region
+        
+        NOTE: available_markets data from the API is NOT a reliable indicator of playability.
+        The API may return incomplete or inaccurate market data, so we do NOT use it to
+        determine if a track is playable. We only rely on the is_local flag.
         
         Args:
             track: The track object from Spotify API
@@ -60,17 +63,9 @@ class SpotifyClient:
             unique_str = f"{uri}:{name}"
             track_id = hashlib.md5(unique_str.encode()).hexdigest()
         
-        # Determine if track is playable
-        # A track is NOT playable if:
-        # 1. It's marked as a local file (is_local: true)
-        # 2. OR it has an empty available_markets list (not available in user's region)
+        # Determine if track is local
+        # Local files are not playable via Spotify API
         is_local = is_local_item or track.get('is_local', False)
-        available_markets = track.get('available_markets', [])
-        
-        # A track is playable only if:
-        # - It's NOT a local file AND
-        # - It has available markets (available_markets is not empty)
-        is_playable = not is_local and bool(available_markets)
         
         return {
             'id': track_id,
@@ -84,9 +79,7 @@ class SpotifyClient:
             'external_url': (track.get('external_urls') or {}).get('spotify', ''),
             'preview_url': track.get('preview_url', ''),
             'release_date': album_obj.get('release_date', ''),
-            'is_playable': is_playable,
             'is_local': is_local,
-            'available_markets': available_markets,
         }
     
     def get_saved_tracks(self, progress_callback=None) -> List[Dict]:
@@ -193,7 +186,7 @@ class SpotifyClient:
                 playlist_id, 
                 limit=limit, 
                 offset=offset,
-                fields='items(is_local,track(id,name,artists,album,duration_ms,popularity,explicit,uri,external_urls,preview_url,available_markets)),next,total'
+                fields='items(is_local,track(id,name,artists,album,duration_ms,popularity,explicit,uri,external_urls,preview_url)),next,total'
             )
             page += 1
             if pages_total is None:

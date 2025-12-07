@@ -72,14 +72,9 @@ def _print_track_item(track: dict, db: SpotifyDatabase, dup_count: int | None = 
     duration_sec = duration_ms // 1000
     duration_str = f"{duration_sec // 60}:{duration_sec % 60:02d}"
     click.echo(f"   ⏱️  {duration_str}")
-    # Playability status
-    is_playable = track.get('is_playable', True)
-    is_local = track.get('is_local', False)
-    if not is_playable:
-        if is_local:
-            click.echo(f"   ⚠️  Not playable (local file)")
-        else:
-            click.echo(f"   ⚠️  Not playable (not available in your region)")
+    # Local file indicator (we know for sure these aren't playable)
+    if track.get('is_local', False):
+        click.echo(f"   ⚠️  Local file (not playable)")
     # Track URL first
     if track.get('external_url'):
         click.echo(f"   🔗 {track['external_url']}")

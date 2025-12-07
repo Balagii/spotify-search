@@ -131,8 +131,8 @@ spotify-search sync-diff
 Notes:
 - Playlists are skipped when their Spotify `snapshot_id` matches the one stored locally (robust change detection). If `snapshot_id` is missing, it falls back to comparing local relationship count to Spotify's `tracks_total`.
 - Snapshot is recorded only after a playlist's tracks are fetched and saved successfully, so partial updates won't cause future skips.
-- Saved tracks are skipped when local count equals Spotify’s saved total.
-- If you suspect a mismatch (e.g., unplayable/local tracks affect totals), run a full `sync` to force refresh.
+- Saved tracks are skipped when local count equals Spotify's saved total.
+- If you suspect a mismatch (e.g., local tracks affect totals), run a full `sync` to force refresh.
 
 ### Search for Tracks
 
@@ -311,7 +311,7 @@ spotify-search/
 **Sync Failures:**
 - Check your internet connection
 - Verify your Spotify credentials are correct
-- Some private or unavailable tracks may be skipped
+- Local tracks in your playlists will be included but cannot be played via Spotify API
 
 **Search Not Working:**
 - Make sure you've run `sync` at least once
