@@ -171,8 +171,10 @@ Examples:
 	```bash
 	spotify-search search --album "25"
 	```
-
-You can combine any of these options. If you use any filter option, the main query argument is ignored and only the filters are used.
+- Search for tracks with "Christmas" in any of the 3 properties AND by artist "John williams":
+	```bash
+	spotify-search search "christmas" --artist "john williams"
+	```
 
 #### Limit Results
 
@@ -261,7 +263,7 @@ spotify-search clear-auth --dry-run
 | `search --name NAME` | Search by track name |
 | `search --artist ARTIST` | Search by artist name |
 | `search --album ALBUM` | Search by album name |
-| `search --name N --artist A [--album AL]` | Combine multiple filters |
+| `search QUERY --name N --artist A [--album AL]` | Combine multiple filters |
 | `duplicates [--limit N]` | List most duplicated tracks across playlists |
 | `list` | List all playlists |
 | `list --playlist NAME` | Show tracks in a playlist |
