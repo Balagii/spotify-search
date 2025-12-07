@@ -153,6 +153,7 @@ class SpotifyDatabase:
 
     def get_playlists_for_track(self, track_id: str) -> List[Dict]:
         """Get all playlists that contain a given track, including all its positions.
+        Also includes saved/liked tracks if the track is in the user's library.
         Returns a list of playlist dicts extended with a 'positions' list.
         If the track appears multiple times in a playlist, all positions are included.
         """
@@ -178,6 +179,20 @@ class SpotifyDatabase:
                 # Sort positions and add them to the playlist
                 pl_copy['positions'] = sorted(positions)
                 enriched.append(pl_copy)
+        
+        # Check if track is in saved tracks
+        SavedTrack = Query()
+        saved = self.saved_tracks.search(SavedTrack.track_id == track_id)
+        if saved:
+            # Add saved tracks as a special "playlist"
+            enriched.append({
+                'name': '❤️ Liked Songs',
+                'id': '__saved_tracks__',
+                'owner': 'You',
+                'public': False,
+                'positions': []
+            })
+        
         # Sort by playlist name for stable output
         enriched.sort(key=lambda p: p.get('name', '').lower())
         return enriched
