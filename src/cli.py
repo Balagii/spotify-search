@@ -15,7 +15,43 @@ import subprocess
 import os
 
 
-@click.group(invoke_without_command=True)
+# Override Click's error handling to show help for unknown commands
+class HelpOnUnknownCommand(click.Group):
+    """Custom Click Group that shows help when command is not recognized."""
+    
+    def invoke(self, ctx):
+        try:
+            return super().invoke(ctx)
+        except click.UsageError as e:
+            # Check if this is an "no such command" error
+            if "No such command" in str(e) or "no such command" in str(e):
+                # Show main help
+                click.echo(ctx.get_help())
+                click.echo("\n" + "="*70)
+                click.echo("DETAILED COMMAND HELP")
+                click.echo("="*70)
+                
+                # Show detailed help for each command
+                for cmd_name in sorted(self.commands.keys()):
+                    cmd = self.commands[cmd_name]
+                    click.echo("\n" + "-"*70)
+                    click.echo(f"Command: {cmd_name}")
+                    click.echo("-"*70)
+                    # Get the help by creating a context and getting its help
+                    try:
+                        sub_ctx = cmd.make_context(cmd_name, [], parent=ctx, allow_extra_args=True)
+                        click.echo(sub_ctx.get_help())
+                    except Exception:
+                        # Fallback to just showing the docstring
+                        if cmd.help:
+                            click.echo(cmd.help)
+                
+                ctx.exit(0)
+            # For other usage errors, re-raise
+            raise
+
+
+@click.group(cls=HelpOnUnknownCommand, invoke_without_command=True)
 @click.pass_context
 def cli(ctx):
     """Spotify Library Manager - Search and manage your Spotify library locally."""
@@ -200,6 +236,9 @@ def sync_diff():
         if db is not None:
             db.close()
         sys.exit(exit_code)
+
+
+@cli.command()
 def setup():
     """Setup Spotify API credentials."""
     click.echo("🎵 Spotify Library Manager Setup\n")
@@ -260,7 +299,13 @@ def auth():
 @click.option('--clear', is_flag=True, help='Clear existing data before syncing')
 @click.option('--playlist', default='', help='Sync only a specific playlist by name')
 def sync(clear, playlist):
-    """Download and sync your entire Spotify library, or just one playlist."""
+    """Download and sync your entire Spotify library, or just one playlist.
+    
+    Usage:
+      spotify-search sync                    Sync entire library
+      spotify-search sync --clear            Sync and clear existing data first
+      spotify-search sync --playlist NAME    Sync only a specific playlist
+    """
     click.echo("🔄 Syncing Spotify library...\n")
 
     if not config.validate_config():
@@ -423,7 +468,16 @@ def sync(clear, playlist):
 @click.option('--artist', default='', help='Filter by artist name substring')
 @click.option('--album', default='', help='Filter by album name substring')
 def search(query, limit, name, artist, album):
-    """Search for tracks in your local library."""
+    """Search for tracks in your local library.
+    
+    Usage:
+      spotify-search search "QUERY"                           Search by track/artist/album
+      spotify-search search "QUERY" --limit N                 Search with result limit
+      spotify-search search "" --name "NAME"                  Search by track name
+      spotify-search search "" --artist "ARTIST"              Search by artist name
+      spotify-search search "" --album "ALBUM"                Search by album name
+      spotify-search search "" --name "NAME" --artist "A"     Combine multiple filters
+    """
     db = SpotifyDatabase()
     
     if (not name) and (not artist) and (not album):
@@ -456,7 +510,12 @@ def search(query, limit, name, artist, album):
 @cli.command()
 @click.option('--playlist', help='Show tracks from a specific playlist')
 def list(playlist):
-    """List all playlists or tracks in a playlist."""
+    """List all playlists or tracks in a playlist.
+    
+    Usage:
+      spotify-search list                          List all playlists
+      spotify-search list --playlist "PLAYLIST_NAME" Show tracks in a specific playlist
+    """
     db = SpotifyDatabase()
     
     if playlist:
@@ -552,7 +611,12 @@ def stats():
 @cli.command(name="clear-auth")
 @click.option('--dry-run', is_flag=True, help='Show auth cache files that would be removed')
 def clear_auth(dry_run):
-    """Remove cached Spotify OAuth tokens (.auth-cache*; legacy .cache*)."""
+    """Remove cached Spotify OAuth tokens (.auth-cache*; legacy .cache*).
+    
+    Usage:
+      spotify-search clear-auth          Remove cached OAuth tokens
+      spotify-search clear-auth --dry-run Preview files to be removed
+    """
     patterns = [
         ".auth-cache", ".auth-cache-*", ".auth-cache.*",
         ".cache", ".cache-*", ".cache.*",  # legacy
@@ -629,16 +693,6 @@ def shell():
             click.echo(f"❌ Error running command: {e}")
             return 1
 
-    def print_help():
-        click.echo("Available commands:")
-        click.echo("  setup | auth | sync | sync --clear | sync --playlist NAME | sync-diff")
-        click.echo("  search <query> [--limit N]")
-        click.echo("  search \"\" --name NAME --artist ARTIST --album ALBUM [--limit N]")
-        click.echo("  list [--playlist NAME]")
-        click.echo("  stats | duplicates [--limit N]")
-        click.echo("  clear-auth [--dry-run]")
-        click.echo("  help | quit | exit")
-
     while True:
         try:
             line = input("spotify-search> ").strip()
@@ -652,7 +706,8 @@ def shell():
         if line.lower() in ("quit", "exit"):
             break
         if line.lower() in ("help", "h", "?"):
-            print_help()
+            # Show help by running the help command
+            run_cmd(["--help"])
             continue
         try:
             parts = shlex.split(line)
@@ -668,7 +723,12 @@ def shell():
 @cli.command()
 @click.option('--limit', default=5, show_default=True, help='Maximum number of duplicate entries to show')
 def duplicates(limit):
-    """List duplicate tracks across playlists, ordered by occurrences desc."""
+    """List duplicate tracks across playlists, ordered by occurrences desc.
+    
+    Usage:
+      spotify-search duplicates           List top 5 duplicate tracks
+      spotify-search duplicates --limit N List top N duplicates
+    """
     db = SpotifyDatabase()
 
     # Count occurrences of each track across all playlist relationships
