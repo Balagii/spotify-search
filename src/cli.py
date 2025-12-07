@@ -472,13 +472,18 @@ def search(query, limit, name, artist, album):
       spotify-search search --artist "ARTIST"        Search by artist name only
       spotify-search search --album "ALBUM"          Search by album name only
       spotify-search search --name "N" --artist "A"  Combine multiple filters
+      spotify-search search "QUERY" --artist "A"     Combine query and filters
     """
     db = SpotifyDatabase()
     
     # Check if any filter options are provided
     has_filter_options = bool(name or artist or album)
     
-    if has_filter_options:
+    if has_filter_options and query:
+        # Use all inclusive search
+        click.echo(f"🔍 Searching for: '{query}' with filters name '{name}', artist '{artist}', album '{album}'\n")
+        results = db.search_tracks_by_query_and_properties(query, name, artist, album)
+    elif has_filter_options:
         # Use property-based search
         click.echo(f"🔍 Searching for tracks with name '{name}', artist '{artist}', and album '{album}'\n")
         results = db.search_tracks_by_properties(name, artist, album)

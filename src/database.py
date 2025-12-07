@@ -88,6 +88,26 @@ class SpotifyDatabase:
         )
         return results
     
+    def search_tracks_by_query_and_properties(self, query: str, name_query: str, artist_query: str, album_query: str) -> List[Dict]:
+        """Search tracks by general query and specific properties."""
+        Track = Query()
+        query_lower = query.lower()
+        name_lower = name_query.lower()
+        album_lower = album_query.lower()
+        artist_lower = artist_query.lower()
+        
+        results = self.tracks.search(
+            (
+                (Track.name.test(lambda v: query_lower in v.lower())) |
+                (Track.artist.test(lambda v: query_lower in v.lower())) |
+                (Track.album.test(lambda v: query_lower in v.lower()))
+            ) &
+            (Track.artist.test(lambda v: artist_lower in v.lower())) &
+            (Track.name.test(lambda v: name_lower in v.lower())) & 
+            (Track.album.test(lambda v: album_lower in v.lower()))
+        )
+        return results
+    
     def get_all_tracks(self) -> List[Dict]:
         """Get all tracks."""
         return self.tracks.all()
