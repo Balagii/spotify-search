@@ -83,6 +83,12 @@ make setup
 source .venv/bin/activate  # On Linux/macOS
 # or
 .venv\Scripts\activate     # On Windows
+
+# Or manually:
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"  # Install project + dev dependencies
+pre-commit install
 ```
 
 ## Development Workflow

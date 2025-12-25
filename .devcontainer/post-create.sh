@@ -10,9 +10,8 @@ source .venv/bin/activate
 # Upgrade pip
 pip install --upgrade pip
 
-# Install dependencies
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
+# Install project with dev dependencies
+pip install -e ".[dev]"
 
 # Install pre-commit hooks
 pre-commit install

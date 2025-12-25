@@ -19,23 +19,23 @@ setup:
 	@echo "🚀 Setting up development environment..."
 	python -m venv .venv
 	. .venv/bin/activate && pip install --upgrade pip
-	. .venv/bin/activate && pip install -r requirements.txt
-	. .venv/bin/activate && pip install -r requirements-dev.txt
+	. .venv/bin/activate && pip install -e ".[dev]"
 	. .venv/bin/activate && pre-commit install
 	. .venv/bin/activate && pre-commit install-hooks
 	@echo "✅ Setup complete! Activate venv with: source .venv/bin/activate"
 
 # Install dependencies
 install:
-	pip install -r requirements.txt
+	pip install -e .
 
 install-dev:
-	pip install -r requirements.txt
-	pip install -r requirements-dev.txt
+	pip install -e ".[dev]"
 
 # Code formatting
 format:
 	@echo "🎨 Formatting code..."
+	autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive src/
+	autopep8 --in-place --aggressive --max-line-length=88 --recursive src/
 	black src/
 	isort src/
 
