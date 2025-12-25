@@ -2,6 +2,8 @@
 
 A Python CLI application to download, store, and search your Spotify library locally. Fills a shortcoming of Spotify UIs where you can't search by track name inside your library. Also adds some fun features like duplicate detection etc.
 
+> **For Developers:** See [DEVELOPMENT.md](DEVELOPMENT.md) for setup instructions, coding standards, and contribution guidelines.
+
 ## Features
 
 - 🔐 OAuth authentication with Spotify

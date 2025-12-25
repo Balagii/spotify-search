@@ -1,0 +1,99 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools-scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spotify-search"
+version = "1.0.0"
+description = "A Python CLI application to download, store, and search your Spotify library locally"
+readme = "README.md"
+requires-python = ">=3.14"
+license = {text = "MIT"}
+authors = [
+    {name = "Balagii"}
+]
+dependencies = [
+    "spotipy==2.23.0",
+    "click==8.1.7",
+    "tinydb==4.8.0",
+    "python-dotenv==1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black==23.12.1",
+    "flake8==7.0.0",
+    "isort==5.13.2",
+    "mypy==1.8.0",
+    "pre-commit==3.6.0",
+    "pytest==7.4.4",
+    "pytest-cov==4.1.0",
+]
+
+[project.scripts]
+spotify-search = "src.cli:cli"
+
+[tool.black]
+line-length = 88
+target-version = ['py314']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+skip_gitignore = true
+
+[tool.mypy]
+python_version = "3.14"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
+no_strict_optional = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --cov=src --cov-report=term-missing"
+testpaths = [
+    "tests",
+]
+pythonpath = [
+    "."
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
