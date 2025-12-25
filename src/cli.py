@@ -1,7 +1,7 @@
 """Command-line interface for Spotify Library Manager."""
 
-import subprocess
 import shlex
+import subprocess
 import sys
 from pathlib import Path
 
@@ -10,9 +10,9 @@ import click
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from spotify_client import SpotifyClient
-from database import SpotifyDatabase
 import config
+from database import SpotifyDatabase
+from spotify_client import SpotifyClient
 
 
 # Override Click's error handling to show help for unknown commands
@@ -522,7 +522,8 @@ def search(query, limit, name, artist, album):
     elif has_filter_options:
         # Use property-based search
         click.echo(
-            f"🔍 Searching for tracks with name '{name}', artist '{artist}', and album '{album}'\n")
+            f"🔍 Searching for tracks with name '{name}', artist '{artist}', and album '{album}'\n"
+        )
         results = db.search_tracks_by_properties(name, artist, album)
     elif query:
         # Use general search on query
