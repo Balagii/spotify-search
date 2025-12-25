@@ -1,12 +1,13 @@
 {
-    "recommendations": [
-        "ms-python.python",
-        "ms-python.vscode-pylance",
-        "ms-python.black-formatter",
-        "ms-python.flake8",
-        "ms-python.isort",
-        "editorconfig.editorconfig",
-        "streetsidesoftware.code-spell-checker",
-        "ms-vscode-remote.remote-containers"
-    ]
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.black-formatter",
+    "ms-python.flake8",
+    "ms-python.isort",
+    "editorconfig.editorconfig",
+    "streetsidesoftware.code-spell-checker",
+    "ms-vscode-remote.remote-containers",
+    "xyz.local-history"
+  ]
 }

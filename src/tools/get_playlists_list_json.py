@@ -1,11 +1,12 @@
 import argparse
 import json
 import sys
-from pathlib import Path
+import sys as _sys
 
 # Ensure imports from src work when run as module or script
+from pathlib import Path
 from pathlib import Path as _Path
-import sys as _sys
+
 _sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
 
 import config  # noqa: E402
@@ -14,18 +15,24 @@ from spotify_client import SpotifyClient  # noqa: E402
 
 def get_playlists(client: SpotifyClient):
     return client.get_user_playlists()
-  
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Dump full JSON of Spotify playlist (no filters)."
     )
     parser.add_argument("-o", "--output", help="Output file path (defaults to stdout)")
-    parser.add_argument("--compact", action="store_true", help="Compact JSON (default pretty-printed)")
-    
+    parser.add_argument(
+        "--compact", action="store_true", help="Compact JSON (default pretty-printed)"
+    )
+
     args = parser.parse_args(argv)
 
     if not config.validate_config():
-        print("Spotify credentials not configured. Run 'spotify-search setup' first.", file=sys.stderr)
+        print(
+            "Spotify credentials not configured. Run 'spotify-search setup' first.",
+            file=sys.stderr,
+        )
         return 2
 
     try:

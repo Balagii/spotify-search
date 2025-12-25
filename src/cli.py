@@ -1,24 +1,24 @@
 """Command-line interface for Spotify Library Manager."""
-import click
-from pathlib import Path
+
+import subprocess
+import shlex
 import sys
-from datetime import datetime
+from pathlib import Path
+
+import click
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-import config
-from database import SpotifyDatabase
 from spotify_client import SpotifyClient
-import shlex
-import subprocess
-import os
+from database import SpotifyDatabase
+import config
 
 
 # Override Click's error handling to show help for unknown commands
 class HelpOnUnknownCommand(click.Group):
     """Custom Click Group that shows help when command is not recognized."""
-    
+
     def invoke(self, ctx):
         try:
             return super().invoke(ctx)
@@ -27,25 +27,27 @@ class HelpOnUnknownCommand(click.Group):
             if "No such command" in str(e) or "no such command" in str(e):
                 # Show main help
                 click.echo(ctx.get_help())
-                click.echo("\n" + "="*70)
+                click.echo("\n" + "=" * 70)
                 click.echo("DETAILED COMMAND HELP")
-                click.echo("="*70)
-                
+                click.echo("=" * 70)
+
                 # Show detailed help for each command
                 for cmd_name in sorted(self.commands.keys()):
                     cmd = self.commands[cmd_name]
-                    click.echo("\n" + "-"*70)
+                    click.echo("\n" + "-" * 70)
                     click.echo(f"Command: {cmd_name}")
-                    click.echo("-"*70)
+                    click.echo("-" * 70)
                     # Get the help by creating a context and getting its help
                     try:
-                        sub_ctx = cmd.make_context(cmd_name, [], parent=ctx, allow_extra_args=True)
+                        sub_ctx = cmd.make_context(
+                            cmd_name, [], parent=ctx, allow_extra_args=True
+                        )
                         click.echo(sub_ctx.get_help())
                     except Exception:
                         # Fallback to just showing the docstring
                         if cmd.help:
                             click.echo(cmd.help)
-                
+
                 ctx.exit(0)
             # For other usage errors, re-raise
             raise
@@ -65,29 +67,31 @@ def cli(ctx):
 
 # Helpers
 def _print_track_item(track: dict, db: SpotifyDatabase, dup_count: int | None = None):
-    click.echo(f"🎵 {track.get('name','')}")
-    click.echo(f"   👤 {track.get('artist','')}")
-    click.echo(f"   💿 {track.get('album','')}")
-    duration_ms = track.get('duration_ms') or 0
+    click.echo(f"🎵 {track.get('name', '')}")
+    click.echo(f"   👤 {track.get('artist', '')}")
+    click.echo(f"   💿 {track.get('album', '')}")
+    duration_ms = track.get("duration_ms") or 0
     duration_sec = duration_ms // 1000
     duration_str = f"{duration_sec // 60}:{duration_sec % 60:02d}"
     click.echo(f"   ⏱️  {duration_str}")
     # Local file indicator (we know for sure these aren't playable)
-    if track.get('is_local', False):
+    if track.get("is_local", False):
         click.echo(f"   ⚠️  Local file (not playable)")
     # Track URL first
-    if track.get('external_url'):
+    if track.get("external_url"):
         click.echo(f"   🔗 {track['external_url']}")
     # Duplicates info (optional)
     if dup_count is not None:
-        click.echo(f"   🔁 Duplicates: {dup_count} occurrence{'s' if dup_count != 1 else ''}")
+        click.echo(
+            f"   🔁 Duplicates: {dup_count} occurrence{'s' if dup_count != 1 else ''}"
+        )
     # Playlists containing this track
-    playlists = db.get_playlists_for_track(track['id'])
+    playlists = db.get_playlists_for_track(track["id"])
     if playlists:
         label = "playlist" if len(playlists) == 1 else "playlists"
         click.echo(f"   📂 In {label}:")
         for p in playlists:
-            positions = p.get('positions', [])
+            positions = p.get("positions", [])
             if positions:
                 # If multiple positions, show all of them
                 if len(positions) > 1:
@@ -97,7 +101,7 @@ def _print_track_item(track: dict, db: SpotifyDatabase, dup_count: int | None = 
             else:
                 pos_text = ""
             click.echo(f"      • {p['name']}{pos_text}")
-            if p.get('external_url'):
+            if p.get("external_url"):
                 click.echo(f"        🔗 {p['external_url']}")
     click.echo()
 
@@ -128,22 +132,26 @@ def sync_diff():
         click.echo(f"   • Remote: {remote_total} • Local: {local_total}")
         if remote_total != local_total:
             click.echo("   ↻ Updating saved tracks...")
-            with click.progressbar(length=100, label='   Saved tracks (fetch)') as bar:
-                last = {'count': 0}
+            with click.progressbar(length=100, label="   Saved tracks (fetch)") as bar:
+                last = {"count": 0}
+
                 def track_progress(current, total):
                     bar.length = total
-                    delta = max(0, current - last['count'])
+                    delta = max(0, current - last["count"])
                     if delta:
                         bar.update(delta)
-                        last['count'] = current
+                        last["count"] = current
+
                 saved_tracks = client.get_saved_tracks(progress_callback=track_progress)
             # Replace local saved tracks
             db.clear_saved_tracks()
-            with click.progressbar(length=len(saved_tracks), label='   Saved tracks (write)') as wbar:
+            with click.progressbar(
+                length=len(saved_tracks), label="   Saved tracks (write)"
+            ) as wbar:
                 for t in saved_tracks:
-                    added_at = t.pop('added_at')
+                    added_at = t.pop("added_at")
                     db.insert_track(t)
-                    db.add_saved_track(t['id'], added_at)
+                    db.add_saved_track(t["id"], added_at)
                     wbar.update(1)
             click.echo(f"   ✅ Saved tracks updated: {len(saved_tracks)}")
         else:
@@ -151,80 +159,94 @@ def sync_diff():
 
         # Playlists diff
         click.echo("\n📝 Fetching playlists list...")
-        with click.progressbar(length=100, label='Playlists') as pbar:
-            last = {'count': 0, 'len': 100}
+        with click.progressbar(length=100, label="Playlists") as pbar:
+            last = {"count": 0, "len": 100}
+
             def playlist_progress(current, total):
-                if total != last['len']:
+                if total != last["len"]:
                     pbar.length = total
                     pbar.update(0)
-                    last['len'] = total
-                delta = max(0, current - last['count'])
+                    last["len"] = total
+                delta = max(0, current - last["count"])
                 pbar.update(delta)
-                last['count'] = current
+                last["count"] = current
+
             playlists = client.get_user_playlists(progress_callback=playlist_progress)
-            if last['count'] < pbar.length:
-                pbar.update(pbar.length - last['count'])
+            if last["count"] < pbar.length:
+                pbar.update(pbar.length - last["count"])
 
         click.echo(f"   ✅ Found {len(playlists)} playlists\n")
 
         updated = 0
         skipped = 0
         for i, playlist in enumerate(playlists, 1):
-            local_pl = db.get_playlist(playlist['id'])
+            local_pl = db.get_playlist(playlist["id"])
             # Prefer snapshot_id comparison; fallback to count when snapshot missing
-            if local_pl and local_pl.get('snapshot_id') and playlist.get('snapshot_id'):
-                if local_pl['snapshot_id'] == playlist['snapshot_id']:
+            if local_pl and local_pl.get("snapshot_id") and playlist.get("snapshot_id"):
+                if local_pl["snapshot_id"] == playlist["snapshot_id"]:
                     skipped += 1
                     continue
             else:
-                local_count = db.get_playlist_track_count(playlist['id'])
-                if local_count == playlist['tracks_total'] and local_pl:
+                local_count = db.get_playlist_track_count(playlist["id"])
+                if local_count == playlist["tracks_total"] and local_pl:
                     skipped += 1
                     continue
 
-            click.echo(f"📂 [{i}/{len(playlists)}] {playlist['name']} ({playlist['tracks_total']} tracks)")
+            click.echo(
+                f"📂 [{i}/{len(playlists)}] {playlist['name']} ({playlist['tracks_total']} tracks)"
+            )
             # Insert/update playlist metadata without snapshot first
             pl_no_snap = dict(playlist)
-            pl_no_snap.pop('snapshot_id', None)
+            pl_no_snap.pop("snapshot_id", None)
             db.insert_playlist(pl_no_snap)
-            if playlist['tracks_total'] > 0:
-                with click.progressbar(length=playlist['tracks_total'], label='   Fetching tracks') as bar:
-                    last = {'count': 0, 'len': playlist['tracks_total']}
+            if playlist["tracks_total"] > 0:
+                with click.progressbar(
+                    length=playlist["tracks_total"], label="   Fetching tracks"
+                ) as bar:
+                    last = {"count": 0, "len": playlist["tracks_total"]}
+
                     def track_progress(current, total):
-                        if total != last['len']:
+                        if total != last["len"]:
                             bar.length = total
                             bar.update(0)
-                            last['len'] = total
-                        delta = max(0, current - last['count'])
+                            last["len"] = total
+                        delta = max(0, current - last["count"])
                         bar.update(delta)
-                        last['count'] = current
-                    
-                    playlist_tracks = client.get_playlist_tracks(playlist['id'], progress_callback=track_progress)
-                    if last['count'] < bar.length:
-                        bar.update(bar.length - last['count'])
+                        last["count"] = current
+
+                    playlist_tracks = client.get_playlist_tracks(
+                        playlist["id"], progress_callback=track_progress
+                    )
+                    if last["count"] < bar.length:
+                        bar.update(bar.length - last["count"])
                 # Replace local relationships for this playlist
-                db.clear_playlist_tracks(playlist['id'])
-                with click.progressbar(length=len(playlist_tracks), label='   Saving to database') as save_bar:
+                db.clear_playlist_tracks(playlist["id"])
+                with click.progressbar(
+                    length=len(playlist_tracks), label="   Saving to database"
+                ) as save_bar:
                     for track_data, position in playlist_tracks:
                         db.insert_track(track_data)
-                        db.add_track_to_playlist(playlist['id'], track_data['id'], position)
+                        db.add_track_to_playlist(
+                            playlist["id"], track_data["id"], position
+                        )
                         save_bar.update(1)
                     if save_bar.pos < save_bar.length:
                         save_bar.update(save_bar.length - save_bar.pos)
             # Commit snapshot only after successful save
-            if playlist.get('snapshot_id'):
-                db.set_playlist_snapshot(playlist['id'], playlist['snapshot_id'])
+            if playlist.get("snapshot_id"):
+                db.set_playlist_snapshot(playlist["id"], playlist["snapshot_id"])
             updated += 1
 
-        click.echo("\n" + "="*50)
+        click.echo("\n" + "=" * 50)
         click.echo("✅ Diff sync completed!")
-        click.echo("="*50)
+        click.echo("=" * 50)
         click.echo(f"   • Playlists updated: {updated}")
         click.echo(f"   • Playlists skipped: {skipped}")
 
     except Exception as e:
         click.echo(f"\n❌ Diff sync failed: {str(e)}")
         import traceback
+
         traceback.print_exc()
         exit_code = 1
     finally:
@@ -237,35 +259,37 @@ def sync_diff():
 def setup():
     """Setup Spotify API credentials."""
     click.echo("🎵 Spotify Library Manager Setup\n")
-    
+
     # Check if .env exists
     env_file = Path(".env")
     if env_file.exists():
         click.echo("⚠️  .env file already exists!")
         if not click.confirm("Do you want to update it?"):
             return
-    
+
     click.echo("\n📝 You need to create a Spotify App to get credentials:")
     click.echo("   1. Go to https://developer.spotify.com/dashboard/applications")
     click.echo("   2. Click 'Create an App'")
     click.echo("   3. Fill in the details and create the app")
-    click.echo("   4. In your app settings, add redirect URI: http://127.0.0.1:8000/callback")
-    click.echo("   5. Copy your Client ID and Client Secret\n")
-    
-    client_id = click.prompt("Enter your Spotify Client ID", type=str)
-    client_secret = click.prompt("Enter your Spotify Client Secret", type=str, hide_input=True)
-    redirect_uri = click.prompt(
-        "Enter your Redirect URI", 
-        type=str, 
-        default="http://127.0.0.1:8000/callback"
+    click.echo(
+        "   4. In your app settings, add redirect URI: http://127.0.0.1:8000/callback"
     )
-    
+    click.echo("   5. Copy your Client ID and Client Secret\n")
+
+    client_id = click.prompt("Enter your Spotify Client ID", type=str)
+    client_secret = click.prompt(
+        "Enter your Spotify Client Secret", type=str, hide_input=True
+    )
+    redirect_uri = click.prompt(
+        "Enter your Redirect URI", type=str, default="http://127.0.0.1:8000/callback"
+    )
+
     # Write to .env file
     with open(".env", "w") as f:
         f.write(f"SPOTIPY_CLIENT_ID={client_id}\n")
         f.write(f"SPOTIPY_CLIENT_SECRET={client_secret}\n")
         f.write(f"SPOTIPY_REDIRECT_URI={redirect_uri}\n")
-    
+
     click.echo("\n✅ Configuration saved to .env file!")
     click.echo("🚀 Run 'spotify-search sync' to download your library")
 
@@ -274,12 +298,12 @@ def setup():
 def auth():
     """Authenticate with Spotify (opens browser)."""
     click.echo("🔐 Authenticating with Spotify...\n")
-    
+
     if not config.validate_config():
         click.echo("❌ Spotify credentials not configured!")
         click.echo("   Run 'spotify-search setup' first")
         return
-    
+
     try:
         client = SpotifyClient()
         user = client.get_current_user()
@@ -291,11 +315,11 @@ def auth():
 
 
 @cli.command()
-@click.option('--clear', is_flag=True, help='Clear existing data before syncing')
-@click.option('--playlist', default='', help='Sync only a specific playlist by name')
+@click.option("--clear", is_flag=True, help="Clear existing data before syncing")
+@click.option("--playlist", default="", help="Sync only a specific playlist by name")
 def sync(clear, playlist):
     """Download and sync your entire Spotify library, or just one playlist.
-    
+
     Usage:
       spotify-search sync                    Sync entire library
       spotify-search sync --clear            Sync and clear existing data first
@@ -327,54 +351,58 @@ def sync(clear, playlist):
         # Sync saved tracks (skip if syncing only a playlist)
         if not playlist:
             click.echo("📀 Fetching saved/liked tracks...")
-            with click.progressbar(length=100, label='Saved tracks') as bar:
-                last = {'count': 0, 'len': 100}
+            with click.progressbar(length=100, label="Saved tracks") as bar:
+                last = {"count": 0, "len": 100}
+
                 def track_progress(current, total):
-                    if total != last['len']:
+                    if total != last["len"]:
                         bar.length = total
                         bar.update(0)  # force redraw when total changes
-                        last['len'] = total
-                    delta = max(0, current - last['count'])
+                        last["len"] = total
+                    delta = max(0, current - last["count"])
                     bar.update(delta)
-                    last['count'] = current
+                    last["count"] = current
 
                 saved_tracks = client.get_saved_tracks(progress_callback=track_progress)
                 # Force bar to complete visually
-                if last['count'] < bar.length:
-                    bar.update(bar.length - last['count'])
+                if last["count"] < bar.length:
+                    bar.update(bar.length - last["count"])
 
             click.echo(f"   💾 Saving {len(saved_tracks)} tracks to database...")
-            with click.progressbar(length=len(saved_tracks), label='   Writing to database') as bar:
+            with click.progressbar(
+                length=len(saved_tracks), label="   Writing to database"
+            ) as bar:
                 for track in saved_tracks:
-                    added_at = track.pop('added_at')
+                    added_at = track.pop("added_at")
                     db.insert_track(track)
-                    db.add_saved_track(track['id'], added_at)
+                    db.add_saved_track(track["id"], added_at)
                     bar.update(1)
 
             click.echo(f"   ✅ Saved {len(saved_tracks)} liked tracks\n")
 
         # Sync playlists
         click.echo("📝 Fetching playlists...")
-        with click.progressbar(length=100, label='Playlists') as bar:
-            last = {'count': 0, 'len': 100}
+        with click.progressbar(length=100, label="Playlists") as bar:
+            last = {"count": 0, "len": 100}
+
             def playlist_progress(current, total):
-                if total != last['len']:
+                if total != last["len"]:
                     bar.length = total
                     bar.update(0)
-                    last['len'] = total
-                delta = max(0, current - last['count'])
+                    last["len"] = total
+                delta = max(0, current - last["count"])
                 bar.update(delta)
-                last['count'] = current
+                last["count"] = current
 
             playlists = client.get_user_playlists(progress_callback=playlist_progress)
-            if last['count'] < bar.length:
-                bar.update(bar.length - last['count'])
+            if last["count"] < bar.length:
+                bar.update(bar.length - last["count"])
 
         click.echo(f"   ✅ Found {len(playlists)} playlists\n")
 
         # If playlist name specified, filter to just that playlist
         if playlist:
-            matching = [p for p in playlists if playlist.lower() in p['name'].lower()]
+            matching = [p for p in playlists if playlist.lower() in p["name"].lower()]
             if not matching:
                 click.echo(f"❌ No playlist found matching '{playlist}'")
                 db.close()
@@ -391,55 +419,60 @@ def sync(clear, playlist):
 
         # Sync each playlist's tracks
         for i, playlist in enumerate(playlists, 1):
-            click.echo(f"📂 [{i}/{len(playlists)}] {playlist['name']} ({playlist['tracks_total']} tracks)")
+            click.echo(
+                f"📂 [{i}/{len(playlists)}] {playlist['name']} ({playlist['tracks_total']} tracks)"
+            )
 
             # Save playlist info
             # Insert without committing snapshot yet
             pl_no_snap = dict(playlist)
-            pl_no_snap.pop('snapshot_id', None)
+            pl_no_snap.pop("snapshot_id", None)
             db.insert_playlist(pl_no_snap)
 
             # Get playlist tracks
-            if playlist['tracks_total'] > 0:
+            if playlist["tracks_total"] > 0:
                 with click.progressbar(
-                    length=playlist['tracks_total'], 
-                    label='   Fetching tracks'
+                    length=playlist["tracks_total"], label="   Fetching tracks"
                 ) as bar:
-                    last = {'count': 0, 'len': playlist['tracks_total']}
+                    last = {"count": 0, "len": playlist["tracks_total"]}
+
                     def track_progress(current, total):
-                        if total != last['len']:
+                        if total != last["len"]:
                             bar.length = total
                             bar.update(0)
-                            last['len'] = total
-                        delta = max(0, current - last['count'])
+                            last["len"] = total
+                        delta = max(0, current - last["count"])
                         bar.update(delta)
-                        last['count'] = current
+                        last["count"] = current
 
                     playlist_tracks = client.get_playlist_tracks(
-                        playlist['id'], 
-                        progress_callback=track_progress
+                        playlist["id"], progress_callback=track_progress
                     )
-                    if last['count'] < bar.length:
-                        bar.update(bar.length - last['count'])
+                    if last["count"] < bar.length:
+                        bar.update(bar.length - last["count"])
 
                 # Save tracks and relationships
-                with click.progressbar(length=len(playlist_tracks), label='   Saving to database') as save_bar:
+                with click.progressbar(
+                    length=len(playlist_tracks), label="   Saving to database"
+                ) as save_bar:
                     for track_data, position in playlist_tracks:
                         db.insert_track(track_data)
-                        db.add_track_to_playlist(playlist['id'], track_data['id'], position)
+                        db.add_track_to_playlist(
+                            playlist["id"], track_data["id"], position
+                        )
                         save_bar.update(1)
                     if save_bar.pos < save_bar.length:
                         save_bar.update(save_bar.length - save_bar.pos)
 
             # Commit snapshot only after successful save
-            if playlist.get('snapshot_id'):
-                db.set_playlist_snapshot(playlist['id'], playlist['snapshot_id'])
+            if playlist.get("snapshot_id"):
+                db.set_playlist_snapshot(playlist["id"], playlist["snapshot_id"])
 
         # Show statistics
         stats = db.get_stats()
-        click.echo("\n" + "="*50)
+        click.echo("\n" + "=" * 50)
         click.echo("✅ Sync completed successfully!")
-        click.echo("="*50)
+        click.echo("=" * 50)
         click.echo(f"📊 Statistics:")
         click.echo(f"   • Total unique tracks: {stats['total_tracks']}")
         click.echo(f"   • Saved/liked tracks: {stats['saved_tracks']}")
@@ -448,6 +481,7 @@ def sync(clear, playlist):
     except Exception as e:
         click.echo(f"\n❌ Sync failed: {str(e)}")
         import traceback
+
         traceback.print_exc()
         exit_code = 1
     finally:
@@ -457,14 +491,14 @@ def sync(clear, playlist):
 
 
 @cli.command()
-@click.argument('query', required=False, default='')
-@click.option('--limit', default=20, help='Maximum number of results to show')
-@click.option('--name', default='', help='Filter by track name substring')
-@click.option('--artist', default='', help='Filter by artist name substring')
-@click.option('--album', default='', help='Filter by album name substring')
+@click.argument("query", required=False, default="")
+@click.option("--limit", default=20, help="Maximum number of results to show")
+@click.option("--name", default="", help="Filter by track name substring")
+@click.option("--artist", default="", help="Filter by artist name substring")
+@click.option("--album", default="", help="Filter by album name substring")
 def search(query, limit, name, artist, album):
     """Search for tracks in your local library.
-    
+
     Usage:
       spotify-search search "QUERY"                  Search by track/artist/album
       spotify-search search "QUERY" --limit N        Search with result limit
@@ -475,69 +509,73 @@ def search(query, limit, name, artist, album):
       spotify-search search "QUERY" --artist "A"     Combine query and filters
     """
     db = SpotifyDatabase()
-    
+
     # Check if any filter options are provided
     has_filter_options = bool(name or artist or album)
-    
+
     if has_filter_options and query:
         # Use all inclusive search
-        click.echo(f"🔍 Searching for: '{query}' with filters name '{name}', artist '{artist}', album '{album}'\n")
+        click.echo(
+            f"🔍 Searching for: '{query}' with filters name '{name}', artist '{artist}', album '{album}'\n"
+        )
         results = db.search_tracks_by_query_and_properties(query, name, artist, album)
     elif has_filter_options:
         # Use property-based search
-        click.echo(f"🔍 Searching for tracks with name '{name}', artist '{artist}', and album '{album}'\n")
+        click.echo(
+            f"🔍 Searching for tracks with name '{name}', artist '{artist}', and album '{album}'\n")
         results = db.search_tracks_by_properties(name, artist, album)
     elif query:
         # Use general search on query
         click.echo(f"🔍 Searching for: '{query}'\n")
         results = db.search_tracks(query)
     else:
-        click.echo("❌ Please provide a search query or use filter options (--name, --artist, --album)")
+        click.echo(
+            "❌ Please provide a search query or use filter options (--name, --artist, --album)"
+        )
         db.close()
         return
-    
+
     if not results:
         click.echo("❌ No results found")
         db.close()
         return
-    
+
     click.echo(f"✅ Found {len(results)} result(s)\n")
-    
+
     # Display results
     for i, track in enumerate(results[:limit], 1):
         click.echo(f"{i}.")
         _print_track_item(track, db)
-    
+
     if len(results) > limit:
         click.echo(f"... and {len(results) - limit} more results")
-    
+
     db.close()
 
 
 @cli.command()
-@click.option('--playlist', help='Show tracks from a specific playlist')
+@click.option("--playlist", help="Show tracks from a specific playlist")
 def list(playlist):
     """List all playlists or tracks in a playlist.
-    
+
     Usage:
       spotify-search list                          List all playlists
       spotify-search list --playlist "PLAYLIST_NAME" Show tracks in a specific playlist
     """
     db = SpotifyDatabase()
-    
+
     if playlist:
         # Search for playlist by name
         playlists = db.get_all_playlists()
         matching_playlists = [
-            p for p in playlists 
-            if playlist.lower() in p['name'].lower()
+            p for p in playlists if playlist.lower() in p["name"].lower()
         ]
-        
+
         if not matching_playlists:
             click.echo(f"❌ No playlist found matching '{playlist}'")
             db.close()
             return
-        
+
         # If multiple matches, show them
         if len(matching_playlists) > 1:
             click.echo(f"Multiple playlists found:")
@@ -547,34 +585,36 @@ def list(playlist):
             selected_playlist = matching_playlists[choice - 1]
         else:
             selected_playlist = matching_playlists[0]
-        
+
         # Show playlist tracks
         click.echo(f"\n📂 {selected_playlist['name']}")
         click.echo(f"   {selected_playlist['description']}")
         click.echo(f"   👤 By: {selected_playlist['owner']}")
         click.echo(f"   🎵 {selected_playlist['tracks_total']} tracks\n")
-        
-        tracks = db.get_playlist_tracks(selected_playlist['id'])
+
+        tracks = db.get_playlist_tracks(selected_playlist["id"])
         for i, track in enumerate(tracks, 1):
             click.echo(f"{i:3d}. {track['name']} - {track['artist']}")
-    
+
     else:
         # List all playlists
         playlists = db.get_all_playlists()
-        
+
         if not playlists:
             click.echo("❌ No playlists found. Run 'sync' first.")
             db.close()
             return
-        
+
         click.echo(f"📚 Your Playlists ({len(playlists)} total)\n")
-        
+
         for i, playlist in enumerate(playlists, 1):
-            icon = "🔓" if playlist['public'] else "🔒"
-            collab = " [Collaborative]" if playlist['collaborative'] else ""
+            icon = "🔓" if playlist["public"] else "🔒"
+            collab = " [Collaborative]" if playlist["collaborative"] else ""
             click.echo(f"{i:3d}. {icon} {playlist['name']}{collab}")
-            click.echo(f"      👤 {playlist['owner']} • 🎵 {playlist['tracks_total']} tracks")
-    
+            click.echo(
+                f"      👤 {playlist['owner']} • 🎵 {playlist['tracks_total']} tracks"
+            )
+
     db.close()
 
 
@@ -582,53 +622,59 @@ def list(playlist):
 def stats():
     """Show library statistics."""
     db = SpotifyDatabase()
-    
+
     stats = db.get_stats()
-    
-    click.echo("\n" + "="*50)
+
+    click.echo("\n" + "=" * 50)
     click.echo("📊 Your Spotify Library Statistics")
-    click.echo("="*50)
+    click.echo("=" * 50)
     click.echo(f"  🎵 Total unique tracks:     {stats['total_tracks']:,}")
     click.echo(f"  ❤️  Saved/liked tracks:     {stats['saved_tracks']:,}")
     click.echo(f"  📂 Total playlists:         {stats['total_playlists']:,}")
-    click.echo("="*50)
-    
+    click.echo("=" * 50)
+
     # Additional stats
     all_tracks = db.get_all_tracks()
     if all_tracks:
-        total_duration_ms = sum(t['duration_ms'] for t in all_tracks)
+        total_duration_ms = sum(t["duration_ms"] for t in all_tracks)
         total_hours = total_duration_ms / (1000 * 60 * 60)
         click.echo(f"  ⏱️  Total listening time:   {total_hours:.1f} hours")
-        
+
         # Most common artists
         artists = {}
         for track in all_tracks:
-            for artist in track['artist'].split(', '):
+            for artist in track["artist"].split(", "):
                 artists[artist] = artists.get(artist, 0) + 1
-        
+
         top_artists = sorted(artists.items(), key=lambda x: x[1], reverse=True)[:5]
         click.echo("\n  🎤 Top Artists:")
         for artist, count in top_artists:
             click.echo(f"     {artist}: {count} tracks")
-    
+
     click.echo()
     db.close()
 
 
 @cli.command(name="clear-auth")
-@click.option('--dry-run', is_flag=True, help='Show auth cache files that would be removed')
+@click.option(
+    "--dry-run", is_flag=True, help="Show auth cache files that would be removed"
+)
 def clear_auth(dry_run):
     """Remove cached Spotify OAuth tokens (.auth-cache*; legacy .cache*).
-    
+
     Usage:
       spotify-search clear-auth          Remove cached OAuth tokens
       spotify-search clear-auth --dry-run Preview files to be removed
     """
     patterns = [
-        ".auth-cache", ".auth-cache-*", ".auth-cache.*",
-        ".cache", ".cache-*", ".cache.*",  # legacy
+        ".auth-cache",
+        ".auth-cache-*",
+        ".auth-cache.*",
+        ".cache",
+        ".cache-*",
+        ".cache.*",  # legacy
     ]
-    root = Path('.')
+    root = Path(".")
     to_remove = []
     for pat in patterns:
         to_remove.extend(root.glob(pat))
@@ -658,7 +704,7 @@ def clear_auth(dry_run):
         try:
             if f.is_dir():
                 # Defensive: token cache is typically a file, but handle dir
-                for child in f.rglob('*'):
+                for child in f.rglob("*"):
                     try:
                         if child.is_file():
                             child.unlink()
@@ -727,11 +773,17 @@ def shell():
         if code != 0:
             click.echo(f"⚠️  Command exited with code {code}")
 
+
 @cli.command()
-@click.option('--limit', default=5, show_default=True, help='Maximum number of duplicate entries to show')
+@click.option(
+    "--limit",
+    default=5,
+    show_default=True,
+    help="Maximum number of duplicate entries to show",
+)
 def duplicates(limit):
     """List duplicate tracks across playlists, ordered by occurrences desc.
-    
+
     Usage:
       spotify-search duplicates           List top 5 duplicate tracks
       spotify-search duplicates --limit N List top N duplicates
@@ -747,7 +799,7 @@ def duplicates(limit):
 
     counts = {}
     for rel in rels:
-        tid = rel.get('track_id')
+        tid = rel.get("track_id")
         if not tid:
             continue
         counts[tid] = counts.get(tid, 0) + 1
@@ -766,7 +818,7 @@ def duplicates(limit):
         return
 
     # Sort by count desc, then by track name
-    dupes.sort(key=lambda x: (-x[1], x[0].get('name',''))) 
+    dupes.sort(key=lambda x: (-x[1], x[0].get("name", "")))
 
     click.echo(f"📋 Top duplicates (showing up to {limit}):\n")
     for idx, (track, cnt) in enumerate(dupes[:limit], 1):
@@ -776,5 +828,5 @@ def duplicates(limit):
     db.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

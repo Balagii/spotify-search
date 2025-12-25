@@ -32,6 +32,9 @@ htmlcov/
 .dmypy.json
 dmypy.json
 
+# Local history
+**/.history/
+
 # IDE
 .idea/
 *.swp
