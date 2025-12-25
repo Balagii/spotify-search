@@ -22,6 +22,7 @@ setup:
 	. .venv/bin/activate && pip install -r requirements.txt
 	. .venv/bin/activate && pip install -r requirements-dev.txt
 	. .venv/bin/activate && pre-commit install
+	. .venv/bin/activate && pre-commit install-hooks
 	@echo "✅ Setup complete! Activate venv with: source .venv/bin/activate"
 
 # Install dependencies
