@@ -197,8 +197,6 @@ spotify-search/
 ├── .pre-commit-config.yaml # Pre-commit hooks config
 ├── Makefile               # Development commands
 ├── pyproject.toml         # Python project & tool config
-├── requirements.txt       # Production dependencies
-├── requirements-dev.txt   # Development dependencies
 └── README.md
 ```
 

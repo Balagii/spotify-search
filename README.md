@@ -54,7 +54,7 @@ python -m venv .venv-win11
 ### 2. Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ### 3. Get Spotify API Credentials
@@ -296,7 +296,7 @@ spotify-search/
 ├── .env                    # Environment variables (not in git)
 ├── .env.example            # Example environment file
 ├── .gitignore              # Git ignore rules
-├── requirements.txt       # Python dependencies
+├── pyproject.toml          # Python dependencies and project metadata
 ├── README.md               # This file
 ├── spotify-search.bat      # Windows launcher
 └── spotify_library.json    # Local database (created after sync)

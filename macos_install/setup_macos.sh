@@ -17,7 +17,7 @@ source .venv/bin/activate
 
 # 2) Install dependencies
 python -m pip install -U pip
-pip install -r requirements.txt
+pip install -e .
 
 # 3) Configure credentials
 if [[ -f .env ]]; then

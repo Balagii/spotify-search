@@ -71,7 +71,7 @@ This document summarizes all the standardization improvements made to ensure a c
      make clean        # Clean cache files
      ```
 
-   - **File:** `requirements-dev.txt`
+   - **File:** `pyproject.toml` (dev dependencies in [project.optional-dependencies])
    - **Purpose:** Development dependencies separate from production
    - **Includes:**
      - black, isort (formatting)
