@@ -1,6 +1,5 @@
 """Database operations using TinyDB."""
 
-import config
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -8,6 +7,8 @@ from typing import Dict, List, Optional
 from tinydb import Query, TinyDB
 from tinydb.middlewares import CachingMiddleware
 from tinydb.storages import JSONStorage
+
+import config
 
 # Add src directory to path
 sys.path.insert(0, str(Path(__file__).parent))

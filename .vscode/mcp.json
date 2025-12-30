@@ -5,7 +5,7 @@
       "url": "https://api.githubcopilot.com/mcp/",
       "headers": {
         "X-MCP-Toolsets": "actions",
-        "Authorization": "${input:Authorization}",
+        "Authorization": "${input:Authorization}"
       }
     }
   },
