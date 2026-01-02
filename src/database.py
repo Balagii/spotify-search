@@ -10,7 +10,7 @@ from tinydb.storages import JSONStorage
 from src import config
 
 
-class SpotifyDatabase:
+class SpotifyDatabase:  # pylint: disable=too-many-public-methods
     """Manages local storage of Spotify library data."""
 
     def __init__(self, db_path: Path = config.DB_PATH):

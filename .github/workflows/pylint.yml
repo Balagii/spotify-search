@@ -22,4 +22,4 @@ jobs:
 
     - name: Analysing the code with pylint
       run: |
-        pylint src/ --max-line-length=88 --disable=C0111,C0103,R0913
+        pylint src/ --max-line-length=88 --disable=C0111,C0103,R0912,R0913,R0914,R0915,R1702
