@@ -7,10 +7,10 @@ import sys as _sys
 from pathlib import Path
 from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
 
-import config  # noqa: E402
-from spotify_client import SpotifyClient  # noqa: E402
+from src import config  # noqa: E402
+from src.spotify_client import SpotifyClient  # noqa: E402
 
 
 def get_playlists(client: SpotifyClient):

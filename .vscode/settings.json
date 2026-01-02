@@ -36,5 +36,6 @@
         "**/*.pyc": true,
         "**/.pytest_cache": true,
         "**/.mypy_cache": true
-    }
+    },
+    "makefile.configureOnOpen": false
 }

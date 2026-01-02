@@ -1,12 +1,12 @@
 """Spotify API client wrapper."""
 
 import hashlib
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-import config
+from src import config
 
 
 class SpotifyClient:
@@ -33,7 +33,7 @@ class SpotifyClient:
 
     def get_current_user(self) -> Dict:
         """Get current user information."""
-        return self.sp.current_user()
+        return cast(Dict, self.sp.current_user())
 
     def extract_track_data(
         self, track: Dict, is_local_item: bool = False
@@ -44,13 +44,15 @@ class SpotifyClient:
         Determines playability based on:
         - is_local: Local files are not playable via Spotify API
 
-        NOTE: available_markets data from the API is NOT a reliable indicator of playability.
-        The API may return incomplete or inaccurate market data, so we do NOT use it to
-        determine if a track is playable. We only rely on the is_local flag.
+        NOTE: available_markets data from the API is NOT a reliable indicator of
+        playability. The API may return incomplete or inaccurate market data, so we do
+        NOT use it to determine if a track is playable. We only rely on the is_local
+        flag.
 
         Args:
             track: The track object from Spotify API
-            is_local_item: Whether the item in the playlist is marked as local (from item.is_local)
+            is_local_item: Whether the item in the playlist is marked as local
+                (from item.is_local)
         """
         if not track:
             return None
@@ -132,7 +134,8 @@ class SpotifyClient:
     def get_saved_tracks_total(self) -> int:
         """Get total count of saved/liked tracks without fetching all pages."""
         results = self.sp.current_user_saved_tracks(limit=1)
-        return results.get("total", 0)
+        total = cast(Any, results).get("total", 0)
+        return int(total or 0)
 
     def get_user_playlists(self, progress_callback=None) -> List[Dict]:
         """Get all user playlists."""
@@ -199,7 +202,12 @@ class SpotifyClient:
                 playlist_id,
                 limit=limit,
                 offset=offset,
-                fields="items(is_local,track(id,name,artists,album,duration_ms,popularity,explicit,uri,external_urls,preview_url)),next,total",
+                fields=(
+                    "items(is_local,track("
+                    "id,name,artists,album,duration_ms,popularity,explicit,uri,"
+                    "external_urls,preview_url))"
+                    ",next,total"
+                ),
             )
             page += 1
             if pages_total is None:

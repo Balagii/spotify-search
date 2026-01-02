@@ -7,12 +7,9 @@ from pathlib import Path
 
 import click
 
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent))
-
-import config
-from database import SpotifyDatabase
-from spotify_client import SpotifyClient
+from src import config
+from src.database import SpotifyDatabase
+from src.spotify_client import SpotifyClient
 
 
 # Override Click's error handling to show help for unknown commands
@@ -76,7 +73,7 @@ def _print_track_item(track: dict, db: SpotifyDatabase, dup_count: int | None = 
     click.echo(f"   ⏱️  {duration_str}")
     # Local file indicator (we know for sure these aren't playable)
     if track.get("is_local", False):
-        click.echo(f"   ⚠️  Local file (not playable)")
+        click.echo("   ⚠️  Local file (not playable)")
     # Track URL first
     if track.get("external_url"):
         click.echo(f"   🔗 {track['external_url']}")
@@ -193,7 +190,8 @@ def sync_diff():
                     continue
 
             click.echo(
-                f"📂 [{i}/{len(playlists)}] {playlist['name']} ({playlist['tracks_total']} tracks)"
+                f"📂 [{i}/{len(playlists)}] "
+                f"{playlist['name']} ({playlist['tracks_total']} tracks)"
             )
             # Insert/update playlist metadata without snapshot first
             pl_no_snap = dict(playlist)
@@ -408,7 +406,7 @@ def sync(clear, playlist):
                 db.close()
                 sys.exit(1)
             if len(matching) > 1:
-                click.echo(f"Multiple playlists found:")
+                click.echo("Multiple playlists found:")
                 for i, p in enumerate(matching, 1):
                     click.echo(f"{i}. {p['name']} ({p['tracks_total']} tracks)")
                 choice = click.prompt("Select playlist number", type=int)
@@ -420,7 +418,8 @@ def sync(clear, playlist):
         # Sync each playlist's tracks
         for i, playlist in enumerate(playlists, 1):
             click.echo(
-                f"📂 [{i}/{len(playlists)}] {playlist['name']} ({playlist['tracks_total']} tracks)"
+                f"📂 [{i}/{len(playlists)}] "
+                f"{playlist['name']} ({playlist['tracks_total']} tracks)"
             )
 
             # Save playlist info
@@ -473,7 +472,7 @@ def sync(clear, playlist):
         click.echo("\n" + "=" * 50)
         click.echo("✅ Sync completed successfully!")
         click.echo("=" * 50)
-        click.echo(f"📊 Statistics:")
+        click.echo("📊 Statistics:")
         click.echo(f"   • Total unique tracks: {stats['total_tracks']}")
         click.echo(f"   • Saved/liked tracks: {stats['saved_tracks']}")
         click.echo(f"   • Total playlists: {stats['total_playlists']}")
@@ -516,13 +515,15 @@ def search(query, limit, name, artist, album):
     if has_filter_options and query:
         # Use all inclusive search
         click.echo(
-            f"🔍 Searching for: '{query}' with filters name '{name}', artist '{artist}', album '{album}'\n"
+            f"🔍 Searching for: '{query}' with filters "
+            f"name '{name}', artist '{artist}', album '{album}'\n"
         )
         results = db.search_tracks_by_query_and_properties(query, name, artist, album)
     elif has_filter_options:
         # Use property-based search
         click.echo(
-            f"🔍 Searching for tracks with name '{name}', artist '{artist}', and album '{album}'\n"
+            f"🔍 Searching for tracks with name '{name}', "
+            f"artist '{artist}', and album '{album}'\n"
         )
         results = db.search_tracks_by_properties(name, artist, album)
     elif query:
@@ -531,7 +532,8 @@ def search(query, limit, name, artist, album):
         results = db.search_tracks(query)
     else:
         click.echo(
-            "❌ Please provide a search query or use filter options (--name, --artist, --album)"
+            "❌ Please provide a search query or use filter options "
+            "(--name, --artist, --album)"
         )
         db.close()
         return
@@ -579,7 +581,7 @@ def list(playlist):
 
         # If multiple matches, show them
         if len(matching_playlists) > 1:
-            click.echo(f"Multiple playlists found:")
+            click.echo("Multiple playlists found:")
             for i, p in enumerate(matching_playlists, 1):
                 click.echo(f"{i}. {p['name']} ({p['tracks_total']} tracks)")
             choice = click.prompt("Select playlist number", type=int)

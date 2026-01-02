@@ -6,11 +6,12 @@ import sys as _sys
 # Ensure imports from src work when run as module or script
 from pathlib import Path
 from pathlib import Path as _Path
+from typing import Any, cast
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+_sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
 
-import config  # noqa: E402
-from spotify_client import SpotifyClient  # noqa: E402
+from src import config  # noqa: E402
+from src.spotify_client import SpotifyClient  # noqa: E402
 
 
 def find_playlist_id_by_name(client: SpotifyClient, name: str, contains: bool = False):
@@ -29,14 +30,17 @@ def find_playlist_id_by_name(client: SpotifyClient, name: str, contains: bool = 
     return matches[0]["id"], matches
 
 
-def fetch_full_playlist_json(sp, playlist_id: str) -> dict:
-    base = sp.playlist(playlist_id)
+def fetch_full_playlist_json(sp: Any, playlist_id: str) -> dict[str, Any]:
+    base = cast(dict[str, Any], sp.playlist(playlist_id))
     # Collect all items (tracks and episodes if present)
     items = []
     limit = 100
     offset = 0
     while True:
-        page = sp.playlist_items(playlist_id, limit=limit, offset=offset)
+        page = cast(
+            dict[str, Any],
+            sp.playlist_items(playlist_id, limit=limit, offset=offset),
+        )
         items.extend(page.get("items", []))
         if not page.get("next"):
             break
@@ -85,7 +89,10 @@ def main(argv=None):
                 )
                 for p in matches:
                     print(
-                        f" - {p['name']} (id={p['id']}, total={p.get('tracks_total', 'n/a')})",
+                        (
+                            f" - {p['name']} (id={p['id']}, "
+                            f"total={p.get('tracks_total', 'n/a')})"
+                        ),
                         file=sys.stderr,
                     )
                 return 3

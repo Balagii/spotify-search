@@ -1,17 +1,13 @@
 """Database operations using TinyDB."""
 
-import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 from tinydb import Query, TinyDB
 from tinydb.middlewares import CachingMiddleware
 from tinydb.storages import JSONStorage
 
-import config
-
-# Add src directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+from src import config
 
 
 class SpotifyDatabase:
@@ -66,7 +62,7 @@ class SpotifyDatabase:
     def get_track(self, track_id: str) -> Optional[Dict]:
         """Get a track by ID."""
         Track = Query()
-        return self.tracks.get(Track.id == track_id)
+        return cast(Optional[Dict], self.tracks.get(Track.id == track_id))
 
     def search_tracks(self, query: str) -> List[Dict]:
         """Search tracks by name, artist, or album."""
@@ -78,7 +74,7 @@ class SpotifyDatabase:
             | (Track.artist.test(lambda v: query_lower in v.lower()))
             | (Track.album.test(lambda v: query_lower in v.lower()))
         )
-        return results
+        return cast(List[Dict], results)
 
     def search_tracks_by_properties(
         self, name_query: str, artist_query: str, album_query: str
@@ -93,7 +89,7 @@ class SpotifyDatabase:
             & (Track.name.test(lambda v: name_lower in v.lower()))
             & (Track.album.test(lambda v: album_lower in v.lower()))
         )
-        return results
+        return cast(List[Dict], results)
 
     def search_tracks_by_query_and_properties(
         self, query: str, name_query: str, artist_query: str, album_query: str
@@ -115,11 +111,11 @@ class SpotifyDatabase:
             & (Track.name.test(lambda v: name_lower in v.lower()))
             & (Track.album.test(lambda v: album_lower in v.lower()))
         )
-        return results
+        return cast(List[Dict], results)
 
     def get_all_tracks(self) -> List[Dict]:
         """Get all tracks."""
-        return self.tracks.all()
+        return cast(List[Dict], self.tracks.all())
 
     # Playlist operations
     def insert_playlist(self, playlist_data: Dict):
@@ -134,11 +130,11 @@ class SpotifyDatabase:
     def get_playlist(self, playlist_id: str) -> Optional[Dict]:
         """Get a playlist by ID."""
         Playlist = Query()
-        return self.playlists.get(Playlist.id == playlist_id)
+        return cast(Optional[Dict], self.playlists.get(Playlist.id == playlist_id))
 
     def get_all_playlists(self) -> List[Dict]:
         """Get all playlists."""
-        return self.playlists.all()
+        return cast(List[Dict], self.playlists.all())
 
     def set_playlist_snapshot(self, playlist_id: str, snapshot_id: str):
         """Update only the snapshot_id for a playlist after successful sync."""
@@ -170,9 +166,11 @@ class SpotifyDatabase:
             PlaylistTrack.playlist_id == playlist_id
         )
 
+        relationships = cast(List[Dict[str, Any]], relationships)
+
         # Sort by position and get full track data
         relationships.sort(key=lambda x: x["position"])
-        tracks = []
+        tracks: List[Dict] = []
         for rel in relationships:
             track = self.get_track(rel["track_id"])
             if track:
@@ -186,7 +184,10 @@ class SpotifyDatabase:
         If the track appears multiple times in a playlist, all positions are included.
         """
         PlaylistTrack = Query()
-        relationships = self.playlist_tracks.search(PlaylistTrack.track_id == track_id)
+        relationships = cast(
+            List[Dict[str, Any]],
+            self.playlist_tracks.search(PlaylistTrack.track_id == track_id),
+        )
         # Group positions by playlist
         positions_per_playlist: Dict[str, list] = {}
         for rel in relationships:
@@ -208,7 +209,10 @@ class SpotifyDatabase:
 
         # Check if track is in saved tracks
         SavedTrack = Query()
-        saved = self.saved_tracks.search(SavedTrack.track_id == track_id)
+        saved = cast(
+            List[Dict[str, Any]],
+            self.saved_tracks.search(SavedTrack.track_id == track_id),
+        )
         if saved:
             # Add saved tracks as a special "playlist"
             enriched.append(
@@ -235,8 +239,8 @@ class SpotifyDatabase:
 
     def get_saved_tracks(self) -> List[Dict]:
         """Get all saved/liked tracks."""
-        saved = self.saved_tracks.all()
-        tracks = []
+        saved = cast(List[Dict[str, Any]], self.saved_tracks.all())
+        tracks: List[Dict] = []
         for s in saved:
             track = self.get_track(s["track_id"])
             if track:
