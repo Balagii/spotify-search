@@ -1,4 +1,4 @@
-"""CLI smoke tests for config error handling and data commands."""
+"""CLI smoke tests for config error handling and data commands"""
 
 from click.testing import CliRunner
 import pytest
