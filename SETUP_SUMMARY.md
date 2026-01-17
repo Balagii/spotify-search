@@ -28,7 +28,9 @@ This document summarizes all the standardization improvements made to ensure a c
      - ✅ Import sorting (isort)
      - ✅ Linting (Flake8)
      - ✅ Type checking (Mypy)
+     - ✅ Tests (pytest)
      - ✅ File consistency (whitespace, EOF, etc.)
+     - ✅ Staged file cleanliness (fails if hooks modify staged files)
 
    - **File:** `pyproject.toml`
    - **Purpose:** Centralized tool configuration
@@ -79,7 +81,6 @@ This document summarizes all the standardization improvements made to ensure a c
      - mypy (type checking)
      - pytest, pytest-cov (testing)
      - pre-commit (git hooks)
-     - bandit, safety (security)
 
 ### 5. **Documentation**
    - **File:** `DEVELOPMENT.md`
@@ -148,7 +149,7 @@ source .venv/bin/activate
 # Auto-formatting happens on save in VS Code
 
 # Before committing
-make pre-commit  # Optional - hooks run automatically
+make pre-commit  # Optional - hooks run automatically (includes pytest)
 
 # Commit
 git add .

@@ -42,3 +42,21 @@ repos:
     hooks:
       - id: mypy
         args: ['--ignore-missing-imports', '--no-strict-optional']
+
+  # Local hooks
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest (local)
+        entry: python scripts/pre_commit_pytest.py
+        language: system
+        pass_filenames: false
+        stages: [commit]
+        always_run: true
+      - id: check-staged-clean
+        name: check staged files are clean
+        entry: python scripts/pre_commit_check_clean.py
+        language: system
+        pass_filenames: false
+        stages: [commit]
+        always_run: true

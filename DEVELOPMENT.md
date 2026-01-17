@@ -116,14 +116,17 @@ This project uses pre-commit hooks to ensure code quality. They run automaticall
 - ✅ Import sorting (isort)
 - ✅ Linting (flake8)
 - ✅ Type checking (mypy)
+- ✅ Tests (pytest)
 - ✅ File consistency (trailing whitespace, EOF, etc.)
+- ✅ Staged file cleanliness (fails if hooks modify staged files)
 
 **How Pre-commit Hooks Work:**
 
 When you run `git commit`, the hooks automatically:
-1. Check and format only your **staged files**
-2. If any files are modified (e.g., auto-formatted), the commit is **blocked**
-3. You need to review and stage the changes, then commit again
+1. Check and format your **staged files**
+2. Run `pytest` for the full test suite
+3. If any files are modified or tests fail, the commit is **blocked**
+4. Review and stage the changes, then commit again
 
 **If a Commit Fails:**
 
@@ -139,6 +142,9 @@ git add .
 git commit -m "Your message"
 # ✅ Commit succeeds
 ```
+
+If tests fail, fix them and rerun `git commit`. The hook output will show the
+exact command to run locally.
 
 **Bypass Hooks (Use Sparingly):**
 
@@ -233,8 +239,8 @@ pytest -v
 If pre-commit hooks fail:
 
 1. Fix the issues reported by the hooks
-2. Run `make format` to auto-format code
-3. Try committing again
+2. Run `pre-commit run --all-files` to apply formatting and re-run checks
+3. Re-stage any changed files and try committing again
 
 ### Virtual environment issues
 

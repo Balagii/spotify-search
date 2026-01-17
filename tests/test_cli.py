@@ -1,12 +1,12 @@
 """CLI smoke tests for config error handling and data commands"""
 
 from click.testing import CliRunner
-import pytest
 
 import src.cli as cli_module
 from src import config
 from src.cli import cli as root_cli
 from src.database import SpotifyDatabase
+import pytest
 
 
 def test_sync_requires_config(monkeypatch: pytest.MonkeyPatch) -> None:

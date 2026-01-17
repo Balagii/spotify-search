@@ -15,7 +15,7 @@ new feature work starts.
 ## Owner Preferences (Captured)
 
 - Use Python 3.14 only (no version matrix).
-- Prefer simple tooling: pre-commit formatting/linting with minimal overlap.
+- Prefer simple tooling: pre-commit formatting/linting/tests with minimal overlap.
 - Prefer simple CI; consolidate linting where possible.
 - Unify venv naming if safe (avoid platform-specific venvs unless required).
 - Low-effort cleanup tasks can be prioritized.
