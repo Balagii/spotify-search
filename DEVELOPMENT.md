@@ -25,7 +25,7 @@ This document describes the standardized development environment for the Spotify
 
 ### Option 1: GitHub Codespaces (Recommended)
 
-The fastest way to get started is with GitHub Codespaces, which provides a fully configured cloud-based development environment with Python 3.14:
+The fastest way to get started is with GitHub Codespaces, which provides a fully configured cloud-based development environment with Python 3.14 (the only supported version):
 
 1. **Open in Codespaces:**
    - Navigate to the [repository on GitHub](https://github.com/Balagii/spotify-search)

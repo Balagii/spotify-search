@@ -34,8 +34,6 @@ install-dev:
 # Code formatting
 format:
 	@echo "🎨 Formatting code..."
-	autoflake --remove-all-unused-imports --remove-unused-variables --in-place --recursive src/
-	autopep8 --in-place --aggressive --max-line-length=88 --recursive src/
 	black src/
 	isort src/
 

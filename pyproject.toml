@@ -7,30 +7,27 @@ name = "spotify-search"
 version = "1.0.0"
 description = "A Python CLI application to download, store, and search your Spotify library locally"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.14,<3.15"
 license = {text = "MIT"}
 authors = [
     {name = "Balagii"}
 ]
 dependencies = [
-    "spotipy==2.23.0",
-    "click==8.1.7",
-    "tinydb==4.8.0",
-    "python-dotenv==1.0.0",
+    "spotipy==2.25.2",
+    "click==8.3.1",
+    "tinydb==4.8.2",
+    "python-dotenv==1.2.1",
 ]
 
 [project.optional-dependencies]
 dev = [
     "black==25.12.0",
-    "autoflake==2.3.1",
-    "autopep8==2.3.2",
     "flake8==7.3.0",
-    "isort==5.13.2",
-    "mypy==1.8.0",
-    "pre-commit==3.6.0",
-    "pylint",
-    "pytest==7.4.4",
-    "pytest-cov==4.1.0",
+    "isort==7.0.0",
+    "mypy==1.19.1",
+    "pre-commit==4.5.1",
+    "pytest==9.0.2",
+    "pytest-cov==7.0.0",
 ]
 
 [project.scripts]

@@ -44,11 +44,16 @@ A Python CLI application to download, store, and search your Spotify library loc
 
 ## Setup
 
+Requires Python 3.14.
+
 ### 1. Create Virtual Environment
 
 ```bash
-python -m venv .venv-win11
-.venv-win11\Scripts\activate
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS/Linux
+source .venv/bin/activate
 ```
 
 ### 2. Install Dependencies
@@ -336,4 +341,4 @@ Possible features to add:
 
 ## License
 
-MIT License - Feel free to use and modify as needed!
+MIT License. See `LICENSE`.

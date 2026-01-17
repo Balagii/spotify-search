@@ -114,7 +114,6 @@ This document summarizes all the standardization improvements made to ensure a c
      - Tests on Python 3.14
      - All pre-commit hooks
      - Code coverage reporting
-     - Separate linting job
 
 ### 8. **Updated Files**
    - **`README.md`:** Added link to DEVELOPMENT.md
