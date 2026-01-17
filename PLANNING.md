@@ -9,8 +9,8 @@ new feature work starts.
 - Python 3.14 is pinned across CI, tooling, and docs; verify every tool and
   workflow supports it consistently.
 - Formatting/linting is simplified but still needs CI verification.
-- Local `pre-commit` and `pytest` runs pass, but coverage is still 0% because
-  tests are smoke-only.
+- Local `pre-commit` and `pytest` runs pass; coverage is now ~55% after adding
+  unit tests for DB/CLI/client behavior.
 
 ## Owner Preferences (Captured)
 
@@ -100,7 +100,8 @@ Dependencies: AG-002.
 - Standardized venv naming to `.venv` and removed `.venv-win11` usage.
 - Removed `src/main.py` (unused venv creation side effects).
 - Simplified formatting pipeline (Black + isort) and removed pylint workflow.
-- Ran `pre-commit` and `pytest` locally; coverage remains at 0% pending tests.
+- Added unit tests for database, CLI, client paging, and sync-diff behavior.
+- Ran `pre-commit` and `pytest` locally; coverage now ~55%.
 
 ## Medium-Long Term Plan
 
