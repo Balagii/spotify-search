@@ -1,10 +1,10 @@
 """Tests for sync-diff behavior."""
 
-from click.testing import CliRunner
 import pytest
+from click.testing import CliRunner
 
-from src import config
 import src.cli as cli_module
+from src import config
 from src.cli import cli as root_cli
 from src.database import SpotifyDatabase
 
@@ -86,7 +86,9 @@ def test_sync_diff_skips_matching_snapshot(tmp_path, monkeypatch: pytest.MonkeyP
     assert fake_client.playlist_tracks_called is False
 
 
-def test_sync_diff_updates_when_snapshot_missing(tmp_path, monkeypatch: pytest.MonkeyPatch):
+def test_sync_diff_updates_when_snapshot_missing(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+):
     """Missing snapshot should trigger playlist update when counts differ."""
     db_path = tmp_path / "spotify_library.json"
     seed = SpotifyDatabase(db_path=db_path)

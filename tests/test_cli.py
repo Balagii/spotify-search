@@ -3,8 +3,8 @@
 from click.testing import CliRunner
 import pytest
 
-from src import config
 import src.cli as cli_module
+from src import config
 from src.cli import cli as root_cli
 from src.database import SpotifyDatabase
 
