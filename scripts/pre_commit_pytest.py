@@ -12,7 +12,9 @@ def main() -> int:
     if result.returncode != 0:
         sys.stderr.write("\npytest failed.\n")
         sys.stderr.write("Fix locally with: python -m pytest\n")
-        sys.stderr.write("If formatting changed files, run: pre-commit run --all-files\n")
+        sys.stderr.write(
+            "If formatting changed files, run: pre-commit run --all-files\n"
+        )
     return result.returncode
 
 

@@ -48,10 +48,10 @@ Do not commit these files.
 
 - Avoid network calls in tests; mock `SpotifyClient` or Spotipy.
 - Use `tmp_path` for TinyDB file tests to avoid touching real data.
-- Local `pre-commit` and `pytest` runs pass; coverage is ~55% after adding unit
-  tests. See `PLANNING.md` for remaining backlog.
 - Pre-commit runs pytest and a staged-clean check; on failure follow the printed
-  command (usually `pre-commit run --all-files`).
+  command (formatting: `pre-commit run --all-files`, tests: `python -m pytest`).
+- Coverage was last reported at ~55% after adding unit tests. See `PLANNING.md`
+  for remaining backlog.
 
 ## Conventions
 

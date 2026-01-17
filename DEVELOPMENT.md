@@ -128,6 +128,9 @@ When you run `git commit`, the hooks automatically:
 3. If any files are modified or tests fail, the commit is **blocked**
 4. Review and stage the changes, then commit again
 
+The hook output prints the exact fix command (formatting: `pre-commit run --all-files`;
+tests: `python -m pytest`).
+
 **If a Commit Fails:**
 
 ```bash
@@ -144,7 +147,7 @@ git commit -m "Your message"
 ```
 
 If tests fail, fix them and rerun `git commit`. The hook output will show the
-exact command to run locally.
+exact command to run locally (typically `python -m pytest`).
 
 **Bypass Hooks (Use Sparingly):**
 

@@ -219,7 +219,8 @@ git push
 
 - Read [DEVELOPMENT.md](DEVELOPMENT.md) for detailed guides
 - Read [CONTRIBUTING.md](CONTRIBUTING.md) for contribution info
-- Check pre-commit hook output for specific issues
+- Check pre-commit hook output for the fix command (formatting:
+  `pre-commit run --all-files`, tests: `python -m pytest`)
 - Run `make help` to see all available commands
 
 ---

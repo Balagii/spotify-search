@@ -37,9 +37,10 @@ make type-check  # Run type checker
 make test        # Run tests
 ```
 
-Pre-commit runs formatting, linting, type checks, and `pytest` on commit. If it
-modifies files or tests fail, the commit is blocked and the hook output will
-tell you which command to run locally (usually `pre-commit run --all-files`).
+Pre-commit runs formatting, linting, type checks, `pytest`, and a staged-clean
+check on commit. If it modifies files or tests fail, the commit is blocked and
+the hook output will tell you which command to run locally (formatting:
+`pre-commit run --all-files`, tests: `python -m pytest`).
 
 ### Commit Messages
 
