@@ -51,13 +51,19 @@ repos:
         entry: python scripts/pre_commit_pytest.py
         language: python
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
         always_run: true
-        additional_dependencies: ['.[dev]']
+        additional_dependencies:
+          - pytest==9.0.2
+          - pytest-cov==7.0.0
+          - spotipy==2.25.2
+          - click==8.3.1
+          - tinydb==4.8.2
+          - python-dotenv==1.2.1
       - id: check-staged-clean
         name: check staged files are clean
         entry: python scripts/pre_commit_check_clean.py
         language: python
         pass_filenames: false
-        stages: [commit]
+        stages: [pre-commit]
         always_run: true
