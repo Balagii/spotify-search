@@ -1,118 +1,152 @@
-# Repo Stabilization Plan
+# Quality Roadmap (Post-Stabilization)
 
-This document captures the current assessment, prioritized technical debt, and
-well-defined tasks for small agents. The goal is to stabilize the repo before
-new feature work starts.
+This plan replaces the stabilization checklist now that CI is green. The focus
+is golden-path E2E coverage plus targeted unit test growth without over-testing.
 
-## Assessment (Current State)
+## Current Baseline
 
-- Python 3.14 is pinned across CI, tooling, and docs; verify every tool and
-  workflow supports it consistently.
-- Formatting/linting is simplified but still needs CI verification.
-- Local `pre-commit` runs include pytest and a staged-clean check; hooks run in
-  pre-commit-managed envs, so venv activation is not required. Last reported
-  coverage is ~55% after adding unit tests for DB/CLI/client behavior.
+- CI is green on Python 3.14; pre-commit runs in managed envs.
+- Unit coverage is ~55%; there are no E2E tests yet.
+- Documentation reflects current workflows and tooling.
 
-## Owner Preferences (Captured)
+## Goals (Next Phase)
 
-- Use Python 3.14 only (no version matrix).
-- Prefer simple tooling: pre-commit formatting/linting/tests with minimal overlap.
-- Prefer simple CI; consolidate linting where possible.
-- Unify venv naming if safe (avoid platform-specific venvs unless required).
-- Low-effort cleanup tasks can be prioritized.
+- Add a small set of read-only E2E tests for CLI golden paths using a real
+  Spotify test account.
+- Increase unit coverage to ~80% without brittle or excessive tests.
+- Keep CI simple; E2E runs only when secrets are available.
 
-## Prioritized Technical Debt Backlog
+## Decisions / Constraints
 
-| ID | Priority | Item | Rationale |
+- Python 3.14 only.
+- E2E tests must be read-only and idempotent.
+- No PR-only enforcement for now; run on push.
+- Pre-commit runs unit tests only (no E2E).
+
+## Prioritized Backlog
+
+| ID | Priority | Item | Outcome |
 | --- | --- | --- | --- |
-| TD-001 | P0 | Lock to Python 3.14 everywhere | Ensure CI/tooling/docs are consistent. |
-| TD-002 | P0 | Restore CI to green | Required to stabilize before feature work. |
-| TD-004 | P2 | Add core unit tests | Needed to prevent regressions. |
-| TD-005 | P3 | Evaluate package layout (`src` package) | Optional refactor for standard structure. |
+| QP-001 | P0 | CI auth bootstrap | Non-interactive Spotify auth in CI. |
+| QP-002 | P0 | Configurable DB path | E2E tests avoid touching real data file. |
+| QP-003 | P1 | Golden-path E2E tests | CLI works end-to-end against real account. |
+| QP-004 | P2 | Unit coverage bump | Reach ~80% with focused tests. |
+| QP-005 | P2 | CI test split | E2E gated by secrets/marker. |
+| QP-006 | P2 | Tooling drift alignment | Make Makefile + pre-commit consistent. |
 
-## Agent Task Breakdown
+## Agent Tasks
 
-### AG-001: Align Supported Python Version (P0)
+### QP-001: CI Auth Bootstrap (P0)
 
-Goal: Use Python 3.14 everywhere across CI, devcontainer, tooling, and docs.
+Goal: run Spotify OAuth in CI without manual login.
 
 Scope:
-- Update `pyproject.toml` (requires-python, Black target, mypy version).
-- Update `.github/workflows/ci.yml` and remove redundant lint workflows.
-- Update `.devcontainer/devcontainer.json`.
-- Update `.pre-commit-config.yaml` (Black language_version).
-- Update docs (`DEVELOPMENT.md`, README if needed).
+- Create a dedicated test Spotify account + app.
+- Generate `.auth-cache` locally and store it as a GH secret (base64).
+- Add CI steps to write `.auth-cache` and set:
+  `SPOTIPY_CLIENT_ID`, `SPOTIPY_CLIENT_SECRET`, `SPOTIPY_REDIRECT_URI`.
+- Document how to refresh the cache.
 
-Acceptance Criteria:
-- CI uses the same Python version as local tooling.
-- `pip install -e ".[dev]"` succeeds on the target version.
-- Docs explicitly state the supported version.
+Acceptance:
+- `SpotifyClient()` works in CI without interactive auth.
+- Secrets are referenced only in CI and never committed.
 
 Dependencies: None.
 
-### AG-002: Restore CI to Green (P0)
+### QP-002: Configurable DB Path (P0)
 
-Goal: Make CI pass consistently.
-
-Scope:
-- Run `pre-commit run --all-files` and `pytest` locally.
-- Fix lint errors or tune configs only when justified.
-- Validate `pytest` and coverage outputs.
-
-Acceptance Criteria:
-- Both GitHub Actions workflows pass without manual reruns.
-- Lint and test results are reproducible locally.
-
-Dependencies: AG-001.
-
-### AG-004: Add Core Unit Tests (P2)
-
-Goal: Add tests for key behavior without real Spotify API calls.
+Goal: allow tests to write to a temp DB file.
 
 Scope:
-- `SpotifyDatabase` tests (search, duplicates, playlist relationships).
-- `SpotifyClient` tests using mocks for Spotipy calls.
-- CLI command tests for routing and error handling (mocked).
+- Add env override for DB path (e.g., `SPOTIFY_DB_PATH`) in `src/config.py`.
+- Update tests/CLI usage to respect the override.
+- Document the override in `DEVELOPMENT.md`.
 
-Acceptance Criteria:
-- Tests run without network access.
-- Coverage meaningfully exceeds smoke-only baseline.
+Acceptance:
+- E2E tests can point DB to a temp location.
+- Default behavior unchanged for users.
 
-Dependencies: AG-002.
+Dependencies: None.
 
-### AG-005: Package Layout Review (P3)
+### QP-003: Golden-path E2E Tests (P1)
 
-Goal: Move toward a standard Python package layout if desired.
+Goal: verify core CLI flows with real data.
 
 Scope:
-- Decide between keeping `src` as the package or renaming to
-  `spotify_search`.
-- Update `pyproject.toml` and import paths if the refactor is approved.
+- Add pytest marker `e2e`.
+- Implement 2-3 tests:
+  - `spotify-search sync` populates DB.
+  - `spotify-search duplicates` returns output without error.
+  - `spotify-search sync-diff` runs without error.
+- Use the temp DB path override.
+- Skip tests if secrets are missing.
 
-Acceptance Criteria:
-- Packaging and imports are consistent across the repo.
+Acceptance:
+- Tests are read-only, deterministic, and pass in CI.
+- Skipped locally unless secrets are provided.
 
-Dependencies: AG-002.
+Dependencies: QP-001, QP-002.
 
-## Completed This Pass
+### QP-004: Unit Coverage Bump (P2)
 
-- Fixed Copilot instruction paths in `.github/settings.json`.
-- Added `LICENSE` and updated README license text.
-- Standardized venv naming to `.venv` and removed `.venv-win11` usage.
-- Removed `src/main.py` (unused venv creation side effects).
-- Simplified formatting pipeline (Black + isort) and removed pylint workflow.
-- Added unit tests for database, CLI, client paging, and sync-diff behavior.
-- Last reported: ran `pre-commit` and `pytest` locally; coverage ~55%.
+Goal: raise coverage to ~80% without brittle tests.
 
-## Medium-Long Term Plan
+Scope:
+- Add tests for `src/config.py` validation.
+- Add tests for CLI error paths and output formatting.
+- Add targeted DB edge cases (empty tables, missing fields).
 
-- Phase 0 (Stabilize CI): AG-001, AG-002.
-- Phase 2 (Core Tests): AG-004.
-- Phase 3 (Hygiene + Refactors): AG-005.
+Acceptance:
+- Coverage >= 80%.
+- No new network calls.
 
-## Definition of Done (Stabilization)
+Dependencies: None.
 
-- CI passes on the supported Python version without manual fixes.
-- Local `make` commands mirror CI behavior.
-- Tests cover core logic without network access.
-- Documentation reflects the actual workflow and tooling.
+### QP-005: CI Test Split (P2)
+
+Goal: keep pre-commit fast and CI reliable.
+
+Scope:
+- Update pre-commit pytest entry to run `-m "not e2e"`.
+- Update CI to run unit tests and then E2E when secrets are present.
+
+Acceptance:
+- Pre-commit remains fast.
+- E2E runs only on push with secrets.
+
+Dependencies: QP-003.
+
+### QP-006: Tooling Drift Alignment (P2)
+
+Goal: eliminate “passes in one place, fails in another” between Makefile and
+pre-commit.
+
+Notes / Options:
+- Option A (preferred): Make pre-commit the source of truth.
+  - Update `make format/lint/type-check` to call
+    `pre-commit run ... --all-files`.
+  - Pros: exact parity with pre-commit/CI; less config drift.
+  - Cons: first run slower due to hook env creation.
+- Option B: Keep direct tool invocations but align scope/config.
+  - Ensure flake8 reads config (add `.flake8` or `flake8-pyproject`).
+  - Makefile targets all relevant code (`src/`, `tests/`, `scripts/`).
+  - Remove duplicate CLI args if config is centralized.
+  - Pros: faster once configured; familiar commands.
+  - Cons: more moving parts; easier to drift again.
+
+Implications:
+- Expanding scope to `tests/`/`scripts/` may surface new lint issues.
+- Changing lint config may require small style fixes.
+- Docs should reflect whichever option is chosen.
+
+Acceptance:
+- `make` targets and `pre-commit` yield the same results on the same files.
+- CI matches local behavior.
+
+Dependencies: None.
+
+## Definition of Done (This Phase)
+
+- E2E golden-path tests run in CI with secrets and skip safely without them.
+- Unit coverage >= 80% and unit tests have no network access.
+- Docs explain how to refresh secrets and run E2E locally.

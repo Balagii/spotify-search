@@ -62,6 +62,6 @@ Do not commit these files.
 
 ## Known Gaps
 
-- CI stability and Python version alignment need fixes; see `PLANNING.md`.
+- CI is green; remaining work is the post-stabilization plan in `PLANNING.md`.
+- E2E tests are not yet implemented and will require GitHub secrets.
 - Tooling drift exists between `Makefile` and pre-commit configuration.
-- Legacy `.venv-win11` folders may exist locally; standard is now `.venv`.
