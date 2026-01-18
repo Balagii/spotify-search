@@ -31,15 +31,15 @@ class SpotifyDatabase:  # pylint: disable=too-many-public-methods
     # Utility counters/maintenance
     def get_playlist_track_count(self, playlist_id: str) -> int:
         """Return number of track relationships for a playlist."""
-        PlaylistTrack = Query()
+        playlist_track = Query()
         return len(
-            self.playlist_tracks.search(PlaylistTrack.playlist_id == playlist_id)
+            self.playlist_tracks.search(playlist_track.playlist_id == playlist_id)
         )
 
     def clear_playlist_tracks(self, playlist_id: str):
         """Remove all track relationships for a playlist."""
-        PlaylistTrack = Query()
-        self.playlist_tracks.remove(PlaylistTrack.playlist_id == playlist_id)
+        playlist_track = Query()
+        self.playlist_tracks.remove(playlist_track.playlist_id == playlist_id)
 
     def get_saved_tracks_count(self) -> int:
         """Return number of saved/liked tracks."""
@@ -52,27 +52,27 @@ class SpotifyDatabase:  # pylint: disable=too-many-public-methods
     # Track operations
     def insert_track(self, track_data: Dict):
         """Insert or update a track."""
-        Track = Query()
-        existing = self.tracks.get(Track.id == track_data["id"])
+        track = Query()
+        existing = self.tracks.get(track.id == track_data["id"])
         if existing:
-            self.tracks.update(track_data, Track.id == track_data["id"])
+            self.tracks.update(track_data, track.id == track_data["id"])
         else:
             self.tracks.insert(track_data)
 
     def get_track(self, track_id: str) -> Optional[Dict]:
         """Get a track by ID."""
-        Track = Query()
-        return cast(Optional[Dict], self.tracks.get(Track.id == track_id))
+        track = Query()
+        return cast(Optional[Dict], self.tracks.get(track.id == track_id))
 
     def search_tracks(self, query: str) -> List[Dict]:
         """Search tracks by name, artist, or album."""
-        Track = Query()
+        track = Query()
         query_lower = query.lower()
 
         results = self.tracks.search(
-            (Track.name.test(lambda v: query_lower in v.lower()))
-            | (Track.artist.test(lambda v: query_lower in v.lower()))
-            | (Track.album.test(lambda v: query_lower in v.lower()))
+            (track.name.test(lambda v: query_lower in v.lower()))
+            | (track.artist.test(lambda v: query_lower in v.lower()))
+            | (track.album.test(lambda v: query_lower in v.lower()))
         )
         return cast(List[Dict], results)
 
@@ -80,14 +80,14 @@ class SpotifyDatabase:  # pylint: disable=too-many-public-methods
         self, name_query: str, artist_query: str, album_query: str
     ) -> List[Dict]:
         """Search tracks by name, artist, and album where matches are found."""
-        Track = Query()
+        track = Query()
         name_lower = name_query.lower()
         album_lower = album_query.lower()
         artist_lower = artist_query.lower()
         results = self.tracks.search(
-            (Track.artist.test(lambda v: artist_lower in v.lower()))
-            & (Track.name.test(lambda v: name_lower in v.lower()))
-            & (Track.album.test(lambda v: album_lower in v.lower()))
+            (track.artist.test(lambda v: artist_lower in v.lower()))
+            & (track.name.test(lambda v: name_lower in v.lower()))
+            & (track.album.test(lambda v: album_lower in v.lower()))
         )
         return cast(List[Dict], results)
 
@@ -95,7 +95,7 @@ class SpotifyDatabase:  # pylint: disable=too-many-public-methods
         self, query: str, name_query: str, artist_query: str, album_query: str
     ) -> List[Dict]:
         """Search tracks by general query and specific properties."""
-        Track = Query()
+        track = Query()
         query_lower = query.lower()
         name_lower = name_query.lower()
         album_lower = album_query.lower()
@@ -103,13 +103,13 @@ class SpotifyDatabase:  # pylint: disable=too-many-public-methods
 
         results = self.tracks.search(
             (
-                (Track.name.test(lambda v: query_lower in v.lower()))
-                | (Track.artist.test(lambda v: query_lower in v.lower()))
-                | (Track.album.test(lambda v: query_lower in v.lower()))
+                (track.name.test(lambda v: query_lower in v.lower()))
+                | (track.artist.test(lambda v: query_lower in v.lower()))
+                | (track.album.test(lambda v: query_lower in v.lower()))
             )
-            & (Track.artist.test(lambda v: artist_lower in v.lower()))
-            & (Track.name.test(lambda v: name_lower in v.lower()))
-            & (Track.album.test(lambda v: album_lower in v.lower()))
+            & (track.artist.test(lambda v: artist_lower in v.lower()))
+            & (track.name.test(lambda v: name_lower in v.lower()))
+            & (track.album.test(lambda v: album_lower in v.lower()))
         )
         return cast(List[Dict], results)
 
@@ -120,17 +120,17 @@ class SpotifyDatabase:  # pylint: disable=too-many-public-methods
     # Playlist operations
     def insert_playlist(self, playlist_data: Dict):
         """Insert or update a playlist."""
-        Playlist = Query()
-        existing = self.playlists.get(Playlist.id == playlist_data["id"])
+        playlist = Query()
+        existing = self.playlists.get(playlist.id == playlist_data["id"])
         if existing:
-            self.playlists.update(playlist_data, Playlist.id == playlist_data["id"])
+            self.playlists.update(playlist_data, playlist.id == playlist_data["id"])
         else:
             self.playlists.insert(playlist_data)
 
     def get_playlist(self, playlist_id: str) -> Optional[Dict]:
         """Get a playlist by ID."""
-        Playlist = Query()
-        return cast(Optional[Dict], self.playlists.get(Playlist.id == playlist_id))
+        playlist = Query()
+        return cast(Optional[Dict], self.playlists.get(playlist.id == playlist_id))
 
     def get_all_playlists(self) -> List[Dict]:
         """Get all playlists."""
@@ -138,21 +138,21 @@ class SpotifyDatabase:  # pylint: disable=too-many-public-methods
 
     def set_playlist_snapshot(self, playlist_id: str, snapshot_id: str):
         """Update only the snapshot_id for a playlist after successful sync."""
-        Playlist = Query()
-        self.playlists.update({"snapshot_id": snapshot_id}, Playlist.id == playlist_id)
+        playlist = Query()
+        self.playlists.update({"snapshot_id": snapshot_id}, playlist.id == playlist_id)
 
     # Playlist-Track relationship operations
     def add_track_to_playlist(self, playlist_id: str, track_id: str, position: int):
         """Add a track to a playlist at a specific position.
         Allows the same track to appear multiple times at different positions."""
-        PlaylistTrack = Query()
+        playlist_track = Query()
         # Check if this specific (playlist, track, position) combination already exists
         # This allows the same track to appear at different positions in the same
         # playlist
         existing = self.playlist_tracks.get(
-            (PlaylistTrack.playlist_id == playlist_id)
-            & (PlaylistTrack.track_id == track_id)
-            & (PlaylistTrack.position == position)
+            (playlist_track.playlist_id == playlist_id)
+            & (playlist_track.track_id == track_id)
+            & (playlist_track.position == position)
         )
         if not existing:
             self.playlist_tracks.insert(
@@ -161,9 +161,9 @@ class SpotifyDatabase:  # pylint: disable=too-many-public-methods
 
     def get_playlist_tracks(self, playlist_id: str) -> List[Dict]:
         """Get all tracks in a playlist."""
-        PlaylistTrack = Query()
+        playlist_track = Query()
         relationships = self.playlist_tracks.search(
-            PlaylistTrack.playlist_id == playlist_id
+            playlist_track.playlist_id == playlist_id
         )
 
         relationships = cast(List[Dict[str, Any]], relationships)
@@ -183,10 +183,10 @@ class SpotifyDatabase:  # pylint: disable=too-many-public-methods
         Returns a list of playlist dicts extended with a 'positions' list.
         If the track appears multiple times in a playlist, all positions are included.
         """
-        PlaylistTrack = Query()
+        playlist_track = Query()
         relationships = cast(
             List[Dict[str, Any]],
-            self.playlist_tracks.search(PlaylistTrack.track_id == track_id),
+            self.playlist_tracks.search(playlist_track.track_id == track_id),
         )
         # Group positions by playlist
         positions_per_playlist: Dict[str, list] = {}
@@ -208,10 +208,10 @@ class SpotifyDatabase:  # pylint: disable=too-many-public-methods
                 enriched.append(pl_copy)
 
         # Check if track is in saved tracks
-        SavedTrack = Query()
+        saved_track = Query()
         saved = cast(
             List[Dict[str, Any]],
-            self.saved_tracks.search(SavedTrack.track_id == track_id),
+            self.saved_tracks.search(saved_track.track_id == track_id),
         )
         if saved:
             # Add saved tracks as a special "playlist"
@@ -232,8 +232,8 @@ class SpotifyDatabase:  # pylint: disable=too-many-public-methods
     # Saved tracks operations
     def add_saved_track(self, track_id: str, added_at: str):
         """Add a track to saved/liked tracks."""
-        SavedTrack = Query()
-        existing = self.saved_tracks.get(SavedTrack.track_id == track_id)
+        saved_track = Query()
+        existing = self.saved_tracks.get(saved_track.track_id == track_id)
         if not existing:
             self.saved_tracks.insert({"track_id": track_id, "added_at": added_at})
 

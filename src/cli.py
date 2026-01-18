@@ -149,33 +149,33 @@ def sync_diff():
             db.clear_saved_tracks()
             with click.progressbar(
                 length=len(saved_tracks), label="   Saved tracks (write)"
-            ) as wbar:
+            ) as write_progress_bar:
                 for t in saved_tracks:
                     added_at = t.pop("added_at")
                     db.insert_track(t)
                     db.add_saved_track(t["id"], added_at)
-                    wbar.update(1)
+                    write_progress_bar.update(1)
             click.echo(f"   ✅ Saved tracks updated: {len(saved_tracks)}")
         else:
             click.echo("   ✅ Up-to-date, skipping saved tracks")
 
         # Playlists diff
         click.echo("\n📝 Fetching playlists list...")
-        with click.progressbar(length=100, label="Playlists") as pbar:
+        with click.progressbar(length=100, label="Playlists") as progress_bar:
             last = {"count": 0, "len": 100}
 
             def playlist_progress(current, total):
                 if total != last["len"]:
-                    pbar.length = total
-                    pbar.update(0)
+                    progress_bar.length = total
+                    progress_bar.update(0)
                     last["len"] = total
                 delta = max(0, current - last["count"])
-                pbar.update(delta)
+                progress_bar.update(delta)
                 last["count"] = current
 
             playlists = client.get_user_playlists(progress_callback=playlist_progress)
-            if last["count"] < pbar.length:
-                pbar.update(pbar.length - last["count"])
+            if last["count"] < progress_bar.length:
+                progress_bar.update(progress_bar.length - last["count"])
 
         click.echo(f"   ✅ Found {len(playlists)} playlists\n")
 
@@ -639,8 +639,8 @@ def list_cmd(playlist_name):
 
         for i, playlist in enumerate(playlists, 1):
             icon = "🔓" if playlist["public"] else "🔒"
-            collab = " [Collaborative]" if playlist["collaborative"] else ""
-            click.echo(f"{i:3d}. {icon} {playlist['name']}{collab}")
+            collaborative = " [Collaborative]" if playlist["collaborative"] else ""
+            click.echo(f"{i:3d}. {icon} {playlist['name']}{collaborative}")
             click.echo(
                 f"      👤 {playlist['owner']} • 🎵 {playlist['tracks_total']} tracks"
             )
@@ -821,14 +821,14 @@ def duplicates(limit):
     db = SpotifyDatabase()
 
     # Count occurrences of each track across all playlist relationships
-    rels = db.playlist_tracks.all()
-    if not rels:
+    relationships = db.playlist_tracks.all()
+    if not relationships:
         click.echo("❌ No playlist data found. Run 'sync' first.")
         db.close()
         return
 
     counts = {}
-    for rel in rels:
+    for rel in relationships:
         tid = rel.get("track_id")
         if not tid:
             continue

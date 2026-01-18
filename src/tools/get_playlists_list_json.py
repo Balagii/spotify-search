@@ -1,13 +1,11 @@
 import argparse
 import json
 import sys
-import sys as _sys
 
 # Ensure imports from src work when run as module or script
 from pathlib import Path
-from pathlib import Path as _Path
 
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from src import config  # noqa: E402
 from src.spotify_client import SpotifyClient  # noqa: E402
