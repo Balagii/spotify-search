@@ -130,6 +130,8 @@ When you run `git commit`, the hooks automatically:
 
 The hook output prints the exact fix command (formatting: `pre-commit run --all-files`;
 tests: `python -m pytest`).
+Hooks run in pre-commit-managed envs, so venv activation is not required. The
+first run can take longer while hook environments install.
 
 **If a Commit Fails:**
 

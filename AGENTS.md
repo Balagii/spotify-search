@@ -50,6 +50,7 @@ Do not commit these files.
 - Use `tmp_path` for TinyDB file tests to avoid touching real data.
 - Pre-commit runs pytest and a staged-clean check; on failure follow the printed
   command (formatting: `pre-commit run --all-files`, tests: `python -m pytest`).
+  Hooks run in pre-commit-managed envs; venv activation is not required.
 - Coverage was last reported at ~55% after adding unit tests. See `PLANNING.md`
   for remaining backlog.
 

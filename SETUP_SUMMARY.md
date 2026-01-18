@@ -159,6 +159,9 @@ git commit -m "feat: your changes"  # Hooks run automatically
 git push
 ```
 
+Pre-commit hooks run in pre-commit-managed envs, so venv activation is not
+required for commits. The first run can take longer while hook envs install.
+
 ## 🎯 Benefits
 
 ### Consistency

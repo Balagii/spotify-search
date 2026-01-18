@@ -9,7 +9,8 @@ new feature work starts.
 - Python 3.14 is pinned across CI, tooling, and docs; verify every tool and
   workflow supports it consistently.
 - Formatting/linting is simplified but still needs CI verification.
-- Local `pre-commit` runs include pytest and a staged-clean check; last reported
+- Local `pre-commit` runs include pytest and a staged-clean check; hooks run in
+  pre-commit-managed envs, so venv activation is not required. Last reported
   coverage is ~55% after adding unit tests for DB/CLI/client behavior.
 
 ## Owner Preferences (Captured)
