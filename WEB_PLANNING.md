@@ -231,6 +231,8 @@ Return fields used by the UI:
   - Use per-user locks and guard sync by user_id.
 - Multi-worker deployments not sharing in-memory locks
   - Run a single worker or use a file lock per user.
+- Session tampering (user_id cookie swapped)
+  - Use signed, server-side sessions and/or re-validate user_id via Spotify.
 - Token cache corruption
   - Provide logout endpoint to clear cache and re-auth.
 
