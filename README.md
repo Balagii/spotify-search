@@ -82,12 +82,17 @@ spotify-search setup
 
 Or manually create a `.env` file:
 
+<!-- env-example:start -->
 ```env
+# Spotify API Credentials
+# Get these from https://developer.spotify.com/dashboard/applications
 SPOTIPY_CLIENT_ID=your_client_id_here
 SPOTIPY_CLIENT_SECRET=your_client_secret_here
 SPOTIPY_REDIRECT_URI=http://127.0.0.1:8000/callback
+# Optional: where to store local data (default: data)
 SPOTIFY_DATA_DIR=data
 ```
+<!-- env-example:end -->
 
 ## Usage
 

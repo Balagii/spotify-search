@@ -105,6 +105,7 @@ make type-check    # Run mypy type checker
 make test          # Run tests
 make test-cov      # Run tests with coverage report
 make pre-commit    # Run all pre-commit hooks manually
+make env-docs      # Update .env.example and README env snippet
 make clean         # Remove cache and build artifacts
 ```
 

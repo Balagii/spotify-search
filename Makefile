@@ -1,4 +1,4 @@
-.PHONY: help install install-dev format lint type-check test test-cov clean pre-commit setup
+.PHONY: help install install-dev format lint type-check test test-cov clean pre-commit setup env-docs
 
 # Default target
 help:
@@ -12,6 +12,7 @@ help:
 	@echo "  make test           - Run tests with pytest"
 	@echo "  make test-cov       - Run tests with coverage report"
 	@echo "  make pre-commit     - Run all pre-commit hooks"
+	@echo "  make env-docs       - Update .env.example and README env snippet"
 	@echo "  make clean          - Remove cache files and build artifacts"
 
 # Initial setup
@@ -60,6 +61,11 @@ test-cov:
 pre-commit:
 	@echo "🔨 Running pre-commit hooks..."
 	pre-commit run --all-files
+
+# Env docs
+env-docs:
+	@echo "📄 Updating env docs..."
+	python scripts/generate_env_docs.py
 
 # Cleaning
 clean:

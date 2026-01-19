@@ -1,17 +1,70 @@
 """Configuration management for Spotify Library Manager."""
 
 import os
+from dataclasses import dataclass
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+
+@dataclass(frozen=True)
+class EnvVar:
+    """Metadata for environment variables used by the app."""
+
+    name: str
+    default: str | None
+    example: str | None
+    required: bool
+    description: str
+
+
+ENV_DOCS_HEADER = [
+    "# Spotify API Credentials",
+    "# Get these from https://developer.spotify.com/dashboard/applications",
+]
+
+ENV_VARS = [
+    EnvVar(
+        name="SPOTIPY_CLIENT_ID",
+        default=None,
+        example="your_client_id_here",
+        required=True,
+        description="",
+    ),
+    EnvVar(
+        name="SPOTIPY_CLIENT_SECRET",
+        default=None,
+        example="your_client_secret_here",
+        required=True,
+        description="",
+    ),
+    EnvVar(
+        name="SPOTIPY_REDIRECT_URI",
+        default="http://127.0.0.1:8000/callback",
+        example=None,
+        required=False,
+        description="",
+    ),
+    EnvVar(
+        name="SPOTIFY_DATA_DIR",
+        default="data",
+        example=None,
+        required=False,
+        description="where to store local data",
+    ),
+]
+
+ENV_VAR_BY_NAME = {var.name: var for var in ENV_VARS}
 
 # Load environment variables
 load_dotenv()
 
 # Project paths
 PROJECT_ROOT = Path(__file__).parent.parent
-DEFAULT_SPOTIFY_DATA_DIR = "data"
-DEFAULT_SPOTIPY_REDIRECT_URI = "http://127.0.0.1:8000/callback"
+DEFAULT_SPOTIFY_DATA_DIR = ENV_VAR_BY_NAME["SPOTIFY_DATA_DIR"].default or "data"
+DEFAULT_SPOTIPY_REDIRECT_URI = (
+    ENV_VAR_BY_NAME["SPOTIPY_REDIRECT_URI"].default or "http://127.0.0.1:8000/callback"
+)
 
 
 def _resolve_data_dir(raw_value: str | None) -> Path:
@@ -23,13 +76,22 @@ def _resolve_data_dir(raw_value: str | None) -> Path:
     return data_dir
 
 
-SPOTIFY_DATA_DIR = _resolve_data_dir(os.getenv("SPOTIFY_DATA_DIR"))
+def _get_env_value(name: str) -> str | None:
+    value = os.getenv(name)
+    if value:
+        return value
+    return ENV_VAR_BY_NAME[name].default
+
+
+SPOTIFY_DATA_DIR = _resolve_data_dir(_get_env_value("SPOTIFY_DATA_DIR"))
 DB_PATH = SPOTIFY_DATA_DIR / "spotify_library.json"
 
 # Spotify API credentials
-SPOTIPY_CLIENT_ID = os.getenv("SPOTIPY_CLIENT_ID")
-SPOTIPY_CLIENT_SECRET = os.getenv("SPOTIPY_CLIENT_SECRET")
-SPOTIPY_REDIRECT_URI = os.getenv("SPOTIPY_REDIRECT_URI", DEFAULT_SPOTIPY_REDIRECT_URI)
+SPOTIPY_CLIENT_ID = _get_env_value("SPOTIPY_CLIENT_ID")
+SPOTIPY_CLIENT_SECRET = _get_env_value("SPOTIPY_CLIENT_SECRET")
+SPOTIPY_REDIRECT_URI = (
+    _get_env_value("SPOTIPY_REDIRECT_URI") or DEFAULT_SPOTIPY_REDIRECT_URI
+)
 
 # Scopes needed for the application
 SPOTIFY_SCOPES = [
