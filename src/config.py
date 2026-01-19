@@ -10,7 +10,19 @@ load_dotenv()
 
 # Project paths
 PROJECT_ROOT = Path(__file__).parent.parent
-DB_PATH = PROJECT_ROOT / "spotify_library.json"
+
+
+def _resolve_data_dir(raw_value: str | None) -> Path:
+    if not raw_value:
+        return PROJECT_ROOT / "data"
+    data_dir = Path(raw_value).expanduser()
+    if not data_dir.is_absolute():
+        data_dir = PROJECT_ROOT / data_dir
+    return data_dir
+
+
+SPOTIFY_DATA_DIR = _resolve_data_dir(os.getenv("SPOTIFY_DATA_DIR"))
+DB_PATH = SPOTIFY_DATA_DIR / "spotify_library.json"
 
 # Spotify API credentials
 SPOTIPY_CLIENT_ID = os.getenv("SPOTIPY_CLIENT_ID")

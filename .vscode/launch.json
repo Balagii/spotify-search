@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Uvicorn: FastAPI",
+      "type": "python",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "src.web_app:app",
+        "--reload",
+        "--port",
+        "8000"
+      ],
+      "env": {
+        "SPOTIFY_DATA_DIR": "${workspaceFolder}/data"
+      },
+      "envFile": "${workspaceFolder}/.env",
+      "justMyCode": true
+    }
+  ]
+}

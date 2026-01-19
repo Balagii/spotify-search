@@ -15,6 +15,8 @@ class SpotifyDatabase:  # pylint: disable=too-many-public-methods
 
     def __init__(self, db_path: Path = config.DB_PATH):
         """Initialize database connection with write caching for performance."""
+        db_path = Path(db_path)
+        db_path.parent.mkdir(parents=True, exist_ok=True)
         self.db = TinyDB(str(db_path), storage=CachingMiddleware(JSONStorage))
         self.tracks = self.db.table("tracks")
         self.playlists = self.db.table("playlists")
