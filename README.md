@@ -86,6 +86,7 @@ Or manually create a `.env` file:
 SPOTIPY_CLIENT_ID=your_client_id_here
 SPOTIPY_CLIENT_SECRET=your_client_secret_here
 SPOTIPY_REDIRECT_URI=http://127.0.0.1:8000/callback
+SPOTIFY_DATA_DIR=data
 ```
 
 ## Usage
@@ -286,12 +287,14 @@ The application uses TinyDB (JSON-based) with the following tables:
 - **playlist_tracks**: Many-to-many relationship between playlists and tracks
 - **saved_tracks**: User's liked/saved tracks
 
-Database file: `spotify_library.json`
+Database file: `data/spotify_library.json` (default; configurable via `SPOTIFY_DATA_DIR`)
 
 ## Project Structure
 
 ```
 spotify-search/
+├── data/                   # Local data folder (created after sync)
+│   └── spotify_library.json # Local database (created after sync)
 ├── src/
 │   ├── cli.py              # CLI commands
 │   ├── config.py           # Configuration management
@@ -303,8 +306,7 @@ spotify-search/
 ├── .gitignore              # Git ignore rules
 ├── pyproject.toml          # Python dependencies and project metadata
 ├── README.md               # This file
-├── spotify-search.bat      # Windows launcher
-└── spotify_library.json    # Local database (created after sync)
+└── spotify-search.bat      # Windows launcher
 ```
 
 ## Tips
@@ -328,7 +330,7 @@ spotify-search/
 
 **Search Not Working:**
 - Make sure you've run `sync` at least once
-- Check that `spotify_library.json` exists and has data
+- Check that `data/spotify_library.json` exists and has data
 
 ## Future Enhancements
 

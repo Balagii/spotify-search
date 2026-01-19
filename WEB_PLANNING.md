@@ -16,7 +16,7 @@ storage.
 
 - CLI entrypoint: `src/cli.py`
 - Spotify API wrapper: `src/spotify_client.py` (Spotipy + OAuth cache file)
-- Storage: `src/database.py` (TinyDB JSON in `spotify_library.json`)
+- Storage: `src/database.py` (TinyDB JSON in `data/spotify_library.json`)
 - Config: `src/config.py` loads `.env` and defines the redirect URI
 
 ## Goals

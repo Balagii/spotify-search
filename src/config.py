@@ -10,11 +10,13 @@ load_dotenv()
 
 # Project paths
 PROJECT_ROOT = Path(__file__).parent.parent
+DEFAULT_SPOTIFY_DATA_DIR = "data"
+DEFAULT_SPOTIPY_REDIRECT_URI = "http://127.0.0.1:8000/callback"
 
 
 def _resolve_data_dir(raw_value: str | None) -> Path:
     if not raw_value:
-        return PROJECT_ROOT / "data"
+        raw_value = DEFAULT_SPOTIFY_DATA_DIR
     data_dir = Path(raw_value).expanduser()
     if not data_dir.is_absolute():
         data_dir = PROJECT_ROOT / data_dir
@@ -27,9 +29,7 @@ DB_PATH = SPOTIFY_DATA_DIR / "spotify_library.json"
 # Spotify API credentials
 SPOTIPY_CLIENT_ID = os.getenv("SPOTIPY_CLIENT_ID")
 SPOTIPY_CLIENT_SECRET = os.getenv("SPOTIPY_CLIENT_SECRET")
-SPOTIPY_REDIRECT_URI = os.getenv(
-    "SPOTIPY_REDIRECT_URI", "http://127.0.0.1:8000/callback"
-)
+SPOTIPY_REDIRECT_URI = os.getenv("SPOTIPY_REDIRECT_URI", DEFAULT_SPOTIPY_REDIRECT_URI)
 
 # Scopes needed for the application
 SPOTIFY_SCOPES = [

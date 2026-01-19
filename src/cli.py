@@ -286,7 +286,9 @@ def setup():
         "Enter your Spotify Client Secret", type=str, hide_input=True
     )
     redirect_uri = click.prompt(
-        "Enter your Redirect URI", type=str, default="http://127.0.0.1:8000/callback"
+        "Enter your Redirect URI",
+        type=str,
+        default=config.DEFAULT_SPOTIPY_REDIRECT_URI,
     )
 
     # Write to .env file

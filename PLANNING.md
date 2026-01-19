@@ -58,7 +58,7 @@ Dependencies: None.
 Goal: allow tests to write to a temp DB file.
 
 Scope:
-- Add env override for DB path (e.g., `SPOTIFY_DB_PATH`) in `src/config.py`.
+- Add env override for DB path (e.g., `SPOTIFY_DATA_DIR`) in `src/config.py`.
 - Update tests/CLI usage to respect the override.
 - Document the override in `DEVELOPMENT.md`.
 

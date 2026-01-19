@@ -10,7 +10,7 @@ consistently.
 - Spotify API wrapper: `src/spotify_client.py` (Spotipy + OAuth).
 - Local storage: `src/database.py` (TinyDB JSON tables).
 - Configuration: `src/config.py` (loads `.env`, defines DB path).
-- Local data file: `spotify_library.json` in repo root.
+- Local data file: `data/spotify_library.json` (default location).
 
 ## Common Commands
 
@@ -40,7 +40,7 @@ python src/cli.py --help
 
 - `.env` stores Spotify API credentials.
 - `.auth-cache*` stores OAuth tokens (Spotipy cache).
-- `spotify_library.json` stores the TinyDB data.
+- `data/spotify_library.json` stores the TinyDB data.
 
 Do not commit these files.
 
