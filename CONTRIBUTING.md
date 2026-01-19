@@ -56,6 +56,10 @@ Follow conventional commit format:
 
 ## Pull Request Process
 
+The default branch is protected. All changes must go through a pull request
+with at least one approval and all conversations resolved. Direct pushes to the
+default branch are blocked.
+
 1. **Fork & Branch**
    ```bash
    git checkout -b feature/your-feature-name
@@ -80,9 +84,9 @@ Follow conventional commit format:
    ```
 
 5. **Create Pull Request**
-   - Describe your changes clearly
+   - Use the PR template and describe changes clearly
    - Reference any related issues
-   - Ensure CI passes
+   - Ensure required checks pass
 
 ## Testing Guidelines
 

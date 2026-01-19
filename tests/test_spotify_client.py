@@ -3,7 +3,11 @@
 import hashlib
 from typing import Any, Dict, List, Optional
 
-from src.spotify_client import SpotifyClient
+import pytest
+
+import src.spotify_client as spotify_client_module
+
+SpotifyClient = spotify_client_module.SpotifyClient
 
 
 class FakeSpotipy:
@@ -172,6 +176,30 @@ def test_get_saved_tracks_paginates_and_reports_progress() -> None:
     assert calls[-1] == (2, 2)
 
 
+def test_get_saved_tracks_returns_empty_on_empty_page() -> None:
+    """Saved tracks should return empty when the page has no items."""
+    pages = [{"items": [], "next": None, "total": 0}]
+    client = SpotifyClient.__new__(SpotifyClient)
+    client.sp = FakeSpotipy(saved_pages=pages)
+
+    tracks = client.get_saved_tracks()
+
+    assert tracks == []
+
+
+def test_get_saved_tracks_total_returns_int() -> None:
+    """Total saved tracks should be reported as an integer."""
+
+    class TotalSpotipy:
+        def current_user_saved_tracks(self, limit: int) -> Dict[str, Any]:
+            return {"total": 42}
+
+    client = SpotifyClient.__new__(SpotifyClient)
+    client.sp = TotalSpotipy()
+
+    assert client.get_saved_tracks_total() == 42
+
+
 def test_get_user_playlists_paginates() -> None:
     """Playlist fetch should return all pages."""
     pages = [
@@ -216,11 +244,29 @@ def test_get_user_playlists_paginates() -> None:
     client = SpotifyClient.__new__(SpotifyClient)
     client.sp = FakeSpotipy(playlist_pages=pages)
 
-    playlists = client.get_user_playlists()
+    calls = []
+
+    def progress(current: int, total: int) -> None:
+        calls.append((current, total))
+
+    playlists = client.get_user_playlists(progress_callback=progress)
 
     assert [p["id"] for p in playlists] == ["p1", "p2"]
     assert playlists[0]["owner"] == "Owner"
     assert playlists[1]["owner"] == "owner2"
+    assert calls[0] == (1, 2)
+    assert calls[-1] == (2, 2)
+
+
+def test_get_user_playlists_returns_empty_on_empty_page() -> None:
+    """Empty playlist pages should return an empty list."""
+    pages = [{"items": [], "next": None, "total": 0}]
+    client = SpotifyClient.__new__(SpotifyClient)
+    client.sp = FakeSpotipy(playlist_pages=pages)
+
+    playlists = client.get_user_playlists()
+
+    assert playlists == []
 
 
 def test_get_playlist_tracks_preserves_positions_across_pages() -> None:
@@ -273,3 +319,110 @@ def test_get_playlist_tracks_preserves_positions_across_pages() -> None:
     tracks = client.get_playlist_tracks("playlist123")
 
     assert [(t["id"], pos) for t, pos in tracks] == [("t1", 0), ("t2", 2)]
+
+
+def test_get_playlist_tracks_reports_progress() -> None:
+    """Playlist track paging should report progress when requested."""
+    pages = [
+        {
+            "items": [
+                {
+                    "track": {
+                        "id": "t1",
+                        "name": "Song A",
+                        "uri": "spotify:track:t1",
+                        "artists": [{"name": "Artist A"}],
+                        "album": {"name": "Album A"},
+                        "duration_ms": 123,
+                        "explicit": False,
+                        "external_urls": {"spotify": "url"},
+                    },
+                    "is_local": False,
+                }
+            ],
+            "next": None,
+            "total": 1,
+        }
+    ]
+    client = SpotifyClient.__new__(SpotifyClient)
+    client.sp = FakeSpotipy(playlist_tracks_pages=pages)
+
+    calls = []
+
+    def progress(current: int, total: int) -> None:
+        calls.append((current, total))
+
+    tracks = client.get_playlist_tracks("playlist123", progress_callback=progress)
+
+    assert [(t["id"], pos) for t, pos in tracks] == [("t1", 0)]
+    assert calls[-1] == (1, 1)
+
+
+def test_get_playlist_tracks_returns_empty_on_empty_page() -> None:
+    """Empty playlist track pages should return an empty list."""
+    pages = [{"items": [], "next": None, "total": 0}]
+    client = SpotifyClient.__new__(SpotifyClient)
+    client.sp = FakeSpotipy(playlist_tracks_pages=pages)
+
+    tracks = client.get_playlist_tracks("playlist123")
+
+    assert tracks == []
+
+
+def test_spotify_client_init_requires_config(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Init should fail fast when credentials are missing."""
+    monkeypatch.setattr(spotify_client_module.config, "validate_config", lambda: False)
+
+    with pytest.raises(ValueError, match="Spotify credentials not configured"):
+        spotify_client_module.SpotifyClient()
+
+
+def test_spotify_client_init_builds_spotipy_client(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Init should wire the Spotipy client with OAuth."""
+    monkeypatch.setattr(spotify_client_module.config, "validate_config", lambda: True)
+    monkeypatch.setattr(spotify_client_module.config, "SPOTIPY_CLIENT_ID", "id")
+    monkeypatch.setattr(spotify_client_module.config, "SPOTIPY_CLIENT_SECRET", "secret")
+    monkeypatch.setattr(
+        spotify_client_module.config, "SPOTIPY_REDIRECT_URI", "http://example"
+    )
+    monkeypatch.setattr(spotify_client_module.config, "SPOTIFY_SCOPE", "scope")
+
+    oauth_kwargs = {}
+
+    def fake_oauth(**kwargs):
+        oauth_kwargs.update(kwargs)
+        return "oauth"
+
+    class FakeSpotify:
+        def __init__(self, auth_manager):
+            self.auth_manager = auth_manager
+
+    monkeypatch.setattr(spotify_client_module, "SpotifyOAuth", fake_oauth)
+    monkeypatch.setattr(spotify_client_module.spotipy, "Spotify", FakeSpotify)
+
+    client = spotify_client_module.SpotifyClient()
+
+    assert isinstance(client.sp, FakeSpotify)
+    assert client.sp.auth_manager == "oauth"
+    assert oauth_kwargs["client_id"] == "id"
+    assert oauth_kwargs["client_secret"] == "secret"
+    assert oauth_kwargs["redirect_uri"] == "http://example"
+    assert oauth_kwargs["scope"] == "scope"
+    assert oauth_kwargs["cache_path"] == ".auth-cache"
+
+
+def test_get_current_user_delegates_to_spotipy() -> None:
+    """Current user fetch should delegate to the Spotipy client."""
+
+    class UserSpotipy:
+        def current_user(self) -> Dict[str, Any]:
+            return {"display_name": "Tester"}
+
+    client = SpotifyClient.__new__(SpotifyClient)
+    client.sp = UserSpotipy()
+
+    assert client.get_current_user()["display_name"] == "Tester"

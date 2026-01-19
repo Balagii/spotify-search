@@ -175,3 +175,165 @@ def test_get_playlists_for_track_includes_positions_and_liked(
     playlist = next(p for p in playlists if p["id"] == "p1")
     assert playlist["positions"] == [0, 2]
     assert any(p["id"] == "__saved_tracks__" for p in playlists)
+
+
+def test_get_playlist_tracks_skips_missing_track_rows(
+    db: SpotifyDatabase,
+) -> None:
+    """Missing track rows should be ignored when listing playlist tracks."""
+    db.insert_track(
+        {
+            "id": "t1",
+            "name": "Song A",
+            "artist": "Artist A",
+            "album": "Album A",
+            "duration_ms": 0,
+        }
+    )
+    db.insert_playlist(
+        {
+            "id": "p1",
+            "name": "Playlist One",
+            "description": "",
+            "owner": "Owner",
+            "public": False,
+            "collaborative": False,
+            "tracks_total": 2,
+        }
+    )
+    db.add_track_to_playlist("p1", "missing", 0)
+    db.add_track_to_playlist("p1", "t1", 1)
+
+    tracks = db.get_playlist_tracks("p1")
+
+    assert [t["id"] for t in tracks] == ["t1"]
+
+
+def test_get_saved_tracks_skips_missing_track_rows(
+    db: SpotifyDatabase,
+) -> None:
+    """Saved tracks with missing track data should be ignored."""
+    db.add_saved_track("missing", "2024-01-01T00:00:00Z")
+
+    assert db.get_saved_tracks() == []
+
+
+def test_add_track_to_playlist_ignores_duplicate_positions(
+    db: SpotifyDatabase,
+) -> None:
+    """Duplicate (playlist, track, position) inserts should be ignored."""
+    db.insert_track(
+        {
+            "id": "t1",
+            "name": "Song A",
+            "artist": "Artist A",
+            "album": "Album A",
+            "duration_ms": 0,
+        }
+    )
+    db.insert_playlist(
+        {
+            "id": "p1",
+            "name": "Playlist One",
+            "description": "",
+            "owner": "Owner",
+            "public": False,
+            "collaborative": False,
+            "tracks_total": 1,
+        }
+    )
+
+    db.add_track_to_playlist("p1", "t1", 0)
+    db.add_track_to_playlist("p1", "t1", 0)
+
+    assert len(db.playlist_tracks) == 1
+
+
+def test_insert_track_updates_existing_row(db: SpotifyDatabase) -> None:
+    """Insert should update existing tracks with the same ID."""
+    db.insert_track(
+        {
+            "id": "t1",
+            "name": "Old Name",
+            "artist": "Artist A",
+            "album": "Album A",
+            "duration_ms": 0,
+        }
+    )
+    db.insert_track(
+        {
+            "id": "t1",
+            "name": "New Name",
+            "artist": "Artist B",
+            "album": "Album B",
+            "duration_ms": 123,
+        }
+    )
+
+    track = db.get_track("t1")
+
+    assert track is not None
+    assert track["name"] == "New Name"
+    assert track["artist"] == "Artist B"
+
+
+def test_get_playlists_for_track_sorts_by_name(
+    db: SpotifyDatabase,
+) -> None:
+    """Playlist list should be sorted by name for stable output."""
+    db.insert_track(
+        {
+            "id": "t1",
+            "name": "Song A",
+            "artist": "Artist A",
+            "album": "Album A",
+            "duration_ms": 0,
+        }
+    )
+    db.insert_playlist(
+        {
+            "id": "p1",
+            "name": "Beta",
+            "description": "",
+            "owner": "Owner",
+            "public": False,
+            "collaborative": False,
+            "tracks_total": 1,
+        }
+    )
+    db.insert_playlist(
+        {
+            "id": "p2",
+            "name": "Alpha",
+            "description": "",
+            "owner": "Owner",
+            "public": False,
+            "collaborative": False,
+            "tracks_total": 1,
+        }
+    )
+    db.add_track_to_playlist("p1", "t1", 0)
+    db.add_track_to_playlist("p2", "t1", 0)
+
+    playlists = db.get_playlists_for_track("t1")
+
+    assert [p["name"] for p in playlists] == ["Alpha", "Beta"]
+
+
+def test_get_saved_tracks_includes_added_at(db: SpotifyDatabase) -> None:
+    """Saved tracks should include their added_at metadata."""
+    db.insert_track(
+        {
+            "id": "t1",
+            "name": "Song A",
+            "artist": "Artist A",
+            "album": "Album A",
+            "duration_ms": 0,
+        }
+    )
+    db.add_saved_track("t1", "2024-01-01T00:00:00Z")
+
+    saved = db.get_saved_tracks()
+
+    assert len(saved) == 1
+    assert saved[0]["added_at"] == "2024-01-01T00:00:00Z"

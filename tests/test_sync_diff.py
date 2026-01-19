@@ -5,26 +5,30 @@ from click.testing import CliRunner
 
 import src.cli as cli_module
 from src import config
-from src.cli import cli as root_cli
 from src.database import SpotifyDatabase
+
+root_cli = cli_module.cli
 
 
 class FakeClient:
     """Stub client for sync-diff scenarios."""
 
-    def __init__(self, playlists, playlist_tracks):
+    def __init__(self, playlists, playlist_tracks, saved_tracks=None):
         self._playlists = playlists
         self._playlist_tracks = playlist_tracks
+        self._saved_tracks = saved_tracks or []
         self.playlist_tracks_called = False
 
     def get_current_user(self):
         return {"display_name": "Test User"}
 
     def get_saved_tracks_total(self):
-        return 0
+        return len(self._saved_tracks)
 
     def get_saved_tracks(self, progress_callback=None):
-        return []
+        if progress_callback:
+            progress_callback(1, 1)
+        return list(self._saved_tracks)
 
     def get_user_playlists(self, progress_callback=None):
         if progress_callback:
@@ -154,3 +158,45 @@ def test_sync_diff_updates_when_snapshot_missing(
     assert stored is not None
     assert stored.get("snapshot_id") == "snap2"
     assert [t["id"] for t in tracks] == ["t1"]
+
+
+def test_sync_diff_updates_saved_tracks_when_counts_differ(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Saved track count mismatches should trigger a refresh."""
+    db_path = tmp_path / "spotify_library.json"
+    SpotifyDatabase(db_path=db_path).close()
+
+    saved_tracks = [
+        {
+            "id": "t1",
+            "name": "Song A",
+            "artist": "Artist A",
+            "album": "Album A",
+            "duration_ms": 0,
+            "added_at": "2024-01-01T00:00:00Z",
+        }
+    ]
+    fake_client = FakeClient(
+        playlists=[], playlist_tracks=[], saved_tracks=saved_tracks
+    )
+
+    monkeypatch.setattr(config, "validate_config", lambda: True)
+    monkeypatch.setattr(cli_module, "SpotifyClient", lambda: fake_client)
+    monkeypatch.setattr(
+        cli_module,
+        "SpotifyDatabase",
+        lambda: SpotifyDatabase(db_path=db_path),
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(root_cli, ["sync-diff"])
+
+    assert result.exit_code == 0
+    assert "Saved tracks updated: 1" in result.output
+
+    check = SpotifyDatabase(db_path=db_path)
+    saved = check.get_saved_tracks()
+    check.close()
+
+    assert [t["id"] for t in saved] == ["t1"]
