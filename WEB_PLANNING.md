@@ -22,16 +22,25 @@ storage.
 ## Goals
 
 - Web UI with three primary flows: login, init (sync), search
+- Support a small number of concurrent users with per-user token/data files
 - FastAPI backend
 - HTML templates with minimal JS and CSS (no frontend framework)
 - Reuse existing DB schema and SpotifyClient logic where possible
 
 ## Non-Goals (Initial Release)
 
-- Multi-user support or hosted SaaS deployment
+- Large-scale SaaS hosting or a heavy database migration
 - Editing playlists or saved tracks
 - Advanced stats, duplicates, or CLI parity beyond search and sync
 - Background job queue or distributed workers
+
+## Multi-User Model (Small Scale)
+
+- Identify users by Spotify user ID (`current_user()["id"]`)
+- Store token caches per user in `data/tokens/{user_id}.json`
+- Store libraries per user in `data/db/{user_id}.json`
+- Keep sessions lightweight: cookie stores only `user_id`, tokens stay server-side
+- Use per-user locks for sync and DB writes to support concurrent users safely
 
 ## Proposed Architecture
 
@@ -72,18 +81,18 @@ Optional for later:
 
 ## OAuth and Session Plan
 
-### Single-User Assumption
+### Multi-User Sessions
 
-Initial web mode assumes a single local user (like the CLI). Tokens can be
-stored in the Spotipy cache file (`.auth-cache`). This avoids building a full
-user database or session store.
+The web app supports a few concurrent users by keeping per-user token caches
+on disk and storing only the Spotify `user_id` in the session cookie.
 
 ### OAuth Mechanics
 
 - Use `SpotifyOAuth` to generate the authorize URL.
 - Handle `/callback` to exchange code for token.
-- Store tokens in `.auth-cache` via Spotipy cache handler.
-- Maintain a lightweight session cookie to indicate "logged in" state.
+- Use a custom Spotipy cache handler to write to
+  `data/tokens/{user_id}.json`.
+- Maintain a lightweight session cookie that stores `user_id` only.
 
 ### Config
 
@@ -96,6 +105,7 @@ Use the existing `.env` keys:
 Add a new env for the web app:
 
 - `APP_SECRET_KEY` for session signing
+- `SPOTIFY_DATA_DIR` for the base data folder (default: `data/`)
 
 ## API and Page Design
 
@@ -151,8 +161,8 @@ Proposed approach:
 Sync can be slow. Use a background task that:
 
 - runs `sync_library()`
-- updates an in-memory `sync_state` dict
-- prevents concurrent runs
+- updates an in-memory `sync_state` dict keyed by `user_id`
+- prevents concurrent runs per user
 
 Status fields:
 
@@ -185,8 +195,9 @@ Return fields used by the UI:
 
 ## Data Model and Storage
 
-- Keep `spotify_library.json` as the DB file by default.
-- Optional: add `SPOTIFY_DB_PATH` env override later if needed.
+- Store all web data under `data/` (created at startup if missing).
+- Per-user TinyDB files: `data/db/{user_id}.json`.
+- Per-user token cache: `data/tokens/{user_id}.json`.
 - Ensure database connections are closed after requests.
 
 ## Testing Plan
@@ -196,6 +207,7 @@ Return fields used by the UI:
 - Web routes return expected status codes.
 - Search endpoint returns filtered results from a temp TinyDB file.
 - Sync endpoint rejects when not authenticated.
+- Per-user storage isolation (tokens and DB files) works as expected.
 
 ### Mocking Strategy
 
@@ -216,7 +228,9 @@ Return fields used by the UI:
 - Long-running sync blocks UI
   - Run sync in background and show status.
 - Concurrent sync or search during sync
-  - Use a "sync in progress" flag and lock the DB while syncing.
+  - Use per-user locks and guard sync by user_id.
+- Multi-worker deployments not sharing in-memory locks
+  - Run a single worker or use a file lock per user.
 - Token cache corruption
   - Provide logout endpoint to clear cache and re-auth.
 
@@ -232,7 +246,7 @@ Return fields used by the UI:
 ### Phase 2: Auth
 
 - Implement `/login` and `/callback`
-- Store auth status in session
+- Store `user_id` in session and tokens in `data/tokens/`
 - Add logout flow
 
 ### Phase 3: Sync
@@ -240,6 +254,7 @@ Return fields used by the UI:
 - Extract shared sync logic to `src/sync_service.py`
 - Implement background sync and status endpoint
 - Add init page UX around sync status
+- Add per-user locks and per-user sync state
 
 ### Phase 4: Search
 
@@ -255,11 +270,13 @@ Return fields used by the UI:
 
 - Web app starts with `uvicorn src.web_app:app`.
 - Login flow completes and sets auth state.
-- Init triggers a library sync and updates the TinyDB file.
-- Search returns tracks from the local DB and displays Spotify URLs.
+- Two different users can log in and store separate token/DB files.
+- Init triggers a user-scoped library sync and updates the user's DB file.
+- Search returns tracks from the user's local DB and displays Spotify URLs.
 
 ## Open Questions
 
 - Should the web UI support `sync_diff` or only full sync?
 - Should the web UI expose playlist listing or stats in v1?
 - Do we want to allow search before init (with a warning)?
+- Should we keep TinyDB per user or move to a shared DB with `user_id` columns?

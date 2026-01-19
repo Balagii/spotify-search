@@ -13,6 +13,7 @@ ENV/
 # Database
 spotify_library.json
 *.db
+data/
 
 # Python
 __pycache__/
