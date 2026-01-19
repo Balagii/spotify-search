@@ -277,7 +277,8 @@ def setup():
     click.echo("   2. Click 'Create an App'")
     click.echo("   3. Fill in the details and create the app")
     click.echo(
-        "   4. In your app settings, add redirect URI: http://127.0.0.1:8000/callback"
+        "   4. In your app settings, add redirect URI: "
+        f"{config.DEFAULT_SPOTIPY_REDIRECT_URI}"
     )
     click.echo("   5. Copy your Client ID and Client Secret\n")
 
