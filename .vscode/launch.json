@@ -8,14 +8,11 @@
       "module": "uvicorn",
       "args": [
         "src.web_app:app",
-        "--reload",
+        "--env-file",
+        "${workspaceFolder}/.env",
         "--port",
         "8000"
       ],
-      "env": {
-        "SPOTIFY_DATA_DIR": "${workspaceFolder}/data"
-      },
-      "envFile": "${workspaceFolder}/.env",
       "justMyCode": true
     }
   ]
