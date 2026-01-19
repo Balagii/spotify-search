@@ -6,7 +6,8 @@ from typing import Any, Dict, List, Optional
 import pytest
 
 import src.spotify_client as spotify_client_module
-from src.spotify_client import SpotifyClient
+
+SpotifyClient = spotify_client_module.SpotifyClient
 
 
 class FakeSpotipy:

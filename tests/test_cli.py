@@ -5,8 +5,9 @@ from click.testing import CliRunner
 
 import src.cli as cli_module
 from src import config
-from src.cli import cli as root_cli
 from src.database import SpotifyDatabase
+
+root_cli = cli_module.cli
 
 
 def _use_temp_db(monkeypatch: pytest.MonkeyPatch, db_path) -> None:

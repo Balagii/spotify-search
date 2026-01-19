@@ -4,8 +4,9 @@ import pytest
 from click.testing import CliRunner
 
 import src.cli as cli_module
-from src.cli import cli as root_cli
 from src.database import SpotifyDatabase
+
+root_cli = cli_module.cli
 
 
 class FakeSyncClient:
